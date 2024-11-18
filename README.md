@@ -1,1 +1,1 @@
-# kay-studyBUddy
+# studyBUddy
