@@ -4,7 +4,7 @@
             "outputFile": "com.example.studybuddy.app-mergeDebugResources-51:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\User\\.gradle\\caches\\transforms-4\\c92184ff49978f13216b8c981af0b6e1\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
+                    "source": "C:\\Users\\User\\.gradle\\caches\\transforms-4\\39e2a7fcd42882606584078e40041952\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
