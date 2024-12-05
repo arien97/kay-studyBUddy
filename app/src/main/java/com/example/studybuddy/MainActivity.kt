@@ -1,8 +1,10 @@
 package com.example.studybuddy
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,11 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -39,8 +44,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -49,6 +58,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
@@ -151,6 +161,7 @@ fun fetchGroups(token: String, groupsState: MutableState<List<Group>>) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(navController: NavHostController) {
     val context = LocalContext.current
@@ -189,19 +200,6 @@ fun ProfileScreen(navController: NavHostController) {
                 CalendarView(showPopup)
                 Spacer(modifier = Modifier.height(16.dp))
             }
-
-//            item {
-//                // Placeholder for latest chat
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(100.dp)
-//                        .background(Color(0xFF1E90FF)) // Specific blue color
-//                ) {
-//                    Text(text = "Latest Chat", modifier = Modifier.align(Alignment.Center), color = Color.White)
-//                }
-//                Spacer(modifier = Modifier.height(16.dp))
-//            }
 
             // Events Section
             val eventsToShow = if (showAllEvents.value) events.value else events.value.take(3)
@@ -256,20 +254,44 @@ fun CircleAvatar() {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarView(showPopup: MutableState<Boolean>) {
-    val daysInMonth = 31
-    val firstDayOfWeek = 0 // 0 for Sunday, 1 for Monday, etc.
+    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
+    val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { currentMonth.value = currentMonth.value.minusMonths(1) }) {
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Previous Month")
+            }
+            Text(
+                text = currentMonth.value.format(monthFormatter),
+                style = MaterialTheme.typography.titleMedium
+            )
+            IconButton(onClick = { currentMonth.value = currentMonth.value.plusMonths(1) }) {
+                Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Next Month")
+            }
+        }
+        CalendarGrid(currentMonth.value, showPopup)
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun CalendarGrid(currentMonth: YearMonth, showPopup: MutableState<Boolean>) {
+    val firstDayOfMonth = currentMonth.atDay(1)
+    val dayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Adjust to make Sunday = 0
+    val daysInMonth = currentMonth.lengthOfMonth()
     val days = (1..daysInMonth).toList()
-    val calendarDays = MutableList(35) { "" }
+    val calendarDays = MutableList(42) { "" }
 
     for (i in days.indices) {
-        calendarDays[firstDayOfWeek + i] = days[i].toString()
+        calendarDays[dayOfWeek + i] = days[i].toString()
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "December", style = MaterialTheme.typography.titleMedium)
-        for (week in 0 until 5) {
+        for (week in 0 until 6) {
             Row {
                 for (day in 0 until 7) {
                     val index = week * 7 + day
