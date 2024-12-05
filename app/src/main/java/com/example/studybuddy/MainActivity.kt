@@ -201,6 +201,11 @@ fun ProfileScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Your Events", style=MaterialTheme.typography.titleMedium)
+            }
+
             // Events Section
             val eventsToShow = if (showAllEvents.value) events.value else events.value.take(3)
             items(eventsToShow) { event ->
@@ -233,10 +238,10 @@ fun ProfileScreen(navController: NavHostController) {
         if (showPopup.value) {
             AlertDialog(
                 onDismissRequest = { showPopup.value = false },
-                title = { Text(text = "Day Clicked") },
-                text = { Text("You clicked on a day!") },
+                title = { Text(text = "Events") },
+                text = { Text("You have no events on this day, go to Home to create an event.") },
                 confirmButton = {
-                    Button(onClick = { showPopup.value = false }) {
+                    Button(onClick = { showPopup.value = false }, colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))) {
                         Text("OK")
                     }
                 }
@@ -335,10 +340,25 @@ fun SettingsScreen(navController: NavHostController) {
 
 @Composable
 fun EventItem(event: Event) {
-    Column(modifier = Modifier.padding(8.dp)) {
-        Text(text = event.title, style = MaterialTheme.typography.titleMedium)
-        Text(text = "${event.day} ${event.timeRange}")
-        Text(text = event.username)
+    Spacer(modifier = Modifier.height(8.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFE0F7FA)) // Super light blue background
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(text = event.title, style = MaterialTheme.typography.titleMedium)
+                Text(text = "${event.day} ${event.timeRange}")
+                Text(text = event.username)
+            }
+        }
     }
 }
 
