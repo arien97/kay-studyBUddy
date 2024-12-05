@@ -17,7 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.studybuddy.features.chat.ChatScreen
 import com.example.studybuddy.features.loading.LoadingRoute
-import com.example.studybuddy.features.main.MainTasRoute
+import com.example.studybuddy.features.main.MainTabsRoute
 import com.example.studybuddy.features.onboarding.OnboardingRoute
 import com.example.studybuddy.features.signbylink.SignByLinkRoute
 import com.example.studybuddy.features.signin.SignInRoute
@@ -77,9 +77,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<NavigationRoute.Tabs> {
-                        MainTasRoute(
-                            chatAction = { navController.navigate(it) },
-                            signOut = { navController.navigate(NavigationRoute.SignIn) { popUpTo(0) } }
+                        MainTabsRoute(
+                            //chatAction = { navController.navigate(it) },
+                            //signOut = { navController.navigate(NavigationRoute.SignIn) { popUpTo(0) } }
                         )
                     }
                     composable<NavigationRoute.Chat> {
