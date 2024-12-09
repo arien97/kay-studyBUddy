@@ -32,18 +32,11 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.studybuddy.api.Group
-import com.example.studybuddy.api.GroupMeApi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -62,9 +55,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    var selectedItem by remember { mutableStateOf(0) }
+    var selectedItem by remember { mutableIntStateOf(0) }
     val items = listOf("home", "chats", "profile")
-    val groups = remember { mutableStateOf<List<Group>>(emptyList()) }
+    //val groups = remember { mutableStateOf<List<Group>>(emptyList()) }
     val events = remember { mutableStateOf(listOf(
         Event("Calculus hw3", "Wednesday", "6-9pm", "User1"),
         Event("Physics Lab", "Thursday", "2-4pm", "User2"),
@@ -76,7 +69,7 @@ fun MainScreen() {
         Box(modifier = Modifier.fillMaxSize()) {
             NavHost(navController = navController, startDestination = "home") {
                 composable("home") { HomeScreen() }
-                composable("chats") { ChatsScreen(groups.value) }
+                composable("chats") { ChatsScreen() }
                 composable("profile") { ProfileScreen(navController) }
                 composable("settings") { SettingsScreen(navController) }
             }
@@ -124,40 +117,12 @@ fun HomeScreen() {
 }
 
 @Composable
-fun GroupList(groups: List<Group>) {
-    LazyColumn {
-        items(groups) { group ->
-            Text(text = group.name)
-        }
-    }
-}
-
-@Composable
-fun ChatsScreen(groups: List<Group>) {
+fun ChatsScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (groups.isEmpty()) {
-            Text(text = "This is the Messages Screen")
-        } else {
-            //GroupList(groups)
-            Text(text = "We have connected to GroupMe!")
-        }
-    }
-}
-
-fun fetchGroups(token: String, groupsState: MutableState<List<Group>>) {
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val response = GroupMeApi.service.getGroups(token)
-            // Update the state with the fetched groups
-            withContext(Dispatchers.Main) {
-                groupsState.value = response.response
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        Text(text = "This is the Messages Screen")
     }
 }
 
