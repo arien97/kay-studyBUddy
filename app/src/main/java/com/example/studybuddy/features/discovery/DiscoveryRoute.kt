@@ -45,76 +45,100 @@ import androidx.navigation.NavController
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun DiscoveryRoute(navController: NavController) {
+    var selectedFilter by remember { mutableStateOf<String?>(null) }
+    var timeRange by remember { mutableStateOf(4f..20f) }
+
     Column(modifier = Modifier.padding(16.dp)) {
-            // Title
-            Text(
-                text = "Home Page",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+        Text(
+            text = "Home Page",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = "",
-                onValueChange = { /* Handle search HERE !!*/ },
-                label = { Text("Search events") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
-                modifier = Modifier.fillMaxWidth()
-            )
+        OutlinedTextField(
+            value = "",
+            onValueChange = { /* Handle search HERE !!*/ },
+            label = { Text("Search events") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            // Buttons sliders etc etc
-            Spacer(modifier = Modifier.height(16.dp))
-            ClassFilterButtons()
-            Spacer(modifier = Modifier.height(16.dp))
-            TimeSlotSlider()
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Event List
-            LazyColumn {
-                items(sampleEvents) { event ->
-                    EventCard(event = event) {
-                        navController.navigate("event_details/${event.id}")
-                    }
+        // Class Filter Buttons
+        ClassFilterButtons(selectedFilter) { selected ->
+            selectedFilter = if (selectedFilter == selected) null else selected
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Time Slot Slider
+        TimeSlotSlider(
+            timeRange = timeRange,
+            onTimeRangeChanged = { timeRange = it }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Filtered Event List, NOTE: THIS IS NOT THE GLOBAL LIST YET
+        LazyColumn {
+            val filteredEvents = sampleEvents.filter { event ->
+                val eventStart = event.startTime
+                val eventEnd = event.endTime
+                val sliderStart = timeRange.start
+                val sliderEnd = timeRange.endInclusive
+
+                val isWithinClassFilter = selectedFilter.isNullOrEmpty() || event.className == selectedFilter
+                val isWithinTimeFilter = eventStart < sliderEnd && eventEnd > sliderStart
+
+                isWithinClassFilter && isWithinTimeFilter
+            }
+
+            items(filteredEvents) { event ->
+                EventCard(event = event) {
+                    navController.navigate("event_details/${event.id}")
                 }
             }
         }
     }
-
-
+}
 
 @Composable
-fun ClassFilterButtons() {
-    // Sample class filter data ADD USER ONES LATER
+fun ClassFilterButtons(selectedFilter: String?, onFilterSelected: (String) -> Unit) {
     val classFilters = listOf("CS 501", "CS 460", "CS 350", "CS 506")
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         items(classFilters) { className ->
-            FilterButton(className)
+            FilterButton(
+                className = className,
+                isSelected = selectedFilter == className,
+                onClick = { onFilterSelected(className) }
+            )
         }
     }
 }
 
 @Composable
-fun FilterButton(className: String) {
+fun FilterButton(className: String, isSelected: Boolean, onClick: () -> Unit) {
     Button(
-        onClick = { /* Handle class filter click */ },
+        onClick = onClick,
         shape = MaterialTheme.shapes.medium,
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+        ),
         modifier = Modifier.height(40.dp)
     ) {
         Text(text = className, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
-
 @Composable
-fun TimeSlotSlider() {
-    // State to hold the start and end values of the range slider
-    var timeRange by remember { mutableStateOf(4f..20f) }
-
+fun TimeSlotSlider(timeRange: ClosedFloatingPointRange<Float>, onTimeRangeChanged: (ClosedFloatingPointRange<Float>) -> Unit) {
     val timeLabels = (0..24).map { i ->
         when {
             i == 0 -> "12 AM"
@@ -125,7 +149,6 @@ fun TimeSlotSlider() {
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        // Display the currently selected time range
         Text(
             text = "Timeframe: ${timeLabels[timeRange.start.toInt()]} - ${timeLabels[timeRange.endInclusive.toInt()]}",
             style = MaterialTheme.typography.bodyLarge
@@ -135,7 +158,7 @@ fun TimeSlotSlider() {
 
         RangeSlider(
             value = timeRange,
-            onValueChange = { timeRange = it },
+            onValueChange = onTimeRangeChanged,
             valueRange = 0f..24f,
             steps = 23,
             modifier = Modifier.fillMaxWidth()
@@ -153,7 +176,6 @@ fun TimeSlotSlider() {
     }
 }
 
-
 @Composable
 fun EventCard(event: Event, onClick: () -> Unit) {
     Card(
@@ -161,8 +183,11 @@ fun EventCard(event: Event, onClick: () -> Unit) {
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
-
     ) {
         Row(
             modifier = Modifier
@@ -181,8 +206,8 @@ fun EventCard(event: Event, onClick: () -> Unit) {
             }
             Icon(
                 imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Go to Event Details"
-
+                contentDescription = "Go to Event Details",
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -196,10 +221,15 @@ fun EventDetailsPage(navController: NavController, eventId: String) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Event Details") },
+                title = { Text("Event Details", color = MaterialTheme.colorScheme.onPrimary) },
+                backgroundColor = MaterialTheme.colorScheme.primary,
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                 }
             )
@@ -311,11 +341,12 @@ fun EventDetailsPage(navController: NavController, eventId: String) {
 }
 
 
-// Sample Events
 val sampleEvent1 = Event(
     id = "1",
     title = "CS 501 Final Study",
     className = "CS 501",
+    startTime = 19f, // 7 pm
+    endTime = 23f, // 11 pm
     time = "7PM - 11PM",
     date = "Friday Dec 6",
     postedBy = "KAYS",
@@ -323,12 +354,40 @@ val sampleEvent1 = Event(
     description = "Group study session to review for the final! Bring some snacks. We will do review questions and go over slides."
 )
 
-val sampleEvents: List<Event> = listOf(sampleEvent1)
+val sampleEvent2 = Event(
+    id = "2",
+    title = "CS 460 Review Session",
+    className = "CS 460",
+    startTime = 14f, // 2 pm
+    endTime = 17f, // 5 pm
+    time = "2PM - 5PM",
+    date = "Friday Dec 6",
+    postedBy = "Yuting",
+    location = "KCB 101",
+    description = "We will be reviewing all lectures together and re-doing tophat questions"
+)
+
+val sampleEvent3 = Event(
+    id = "3",
+    title = "CS 350 Ruminate in Turmoil",
+    className = "CS 350",
+    startTime = 0f, // midnight?
+    endTime = 4f, // 4 am
+    time = "12AM - 4AM",
+    date = "Friday Dec 6",
+    postedBy = "Yuting",
+    location = "My house",
+    description = "Sad Time"
+)
+
+val sampleEvents: List<Event> = listOf(sampleEvent1, sampleEvent2, sampleEvent3)
 
 data class Event(
     val id: String,
     val title: String,
     val className: String,
+    val startTime: Float,
+    val endTime: Float,
     val time: String,
     val date: String,
     val postedBy: String,
