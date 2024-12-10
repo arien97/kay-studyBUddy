@@ -78,8 +78,8 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NavigationRoute.Tabs> {
                         MainTabsRoute(
-                            //chatAction = { navController.navigate(it) },
-                            //signOut = { navController.navigate(NavigationRoute.SignIn) { popUpTo(0) } }
+                            chatAction = { navController.navigate(it) },
+                            signOut = { navController.navigate(NavigationRoute.SignIn) { popUpTo(0) } }
                         )
                     }
                     composable<NavigationRoute.Chat> {

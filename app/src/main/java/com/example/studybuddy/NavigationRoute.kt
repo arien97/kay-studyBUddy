@@ -23,6 +23,7 @@ sealed interface NavigationRoute {
     @Serializable
     data object Tabs : NavigationRoute
 
+
     @Serializable
     data class Chat(
         val chatRoomUUID: String,
