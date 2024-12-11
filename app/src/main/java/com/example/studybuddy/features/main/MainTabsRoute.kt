@@ -37,7 +37,7 @@ fun MainTabsRoute(
     chatAction: (NavigationRoute.Chat) -> Unit,
 ) {
     val navController = rememberNavController()
-    val tabs = listOf(Tab.Home, Tab.ChatList, Tab.Profile, Tab.CreateEvent)
+    val tabs = listOf(Tab.Home, Tab.ChatList, Tab.CreateEvent, Tab.Profile)
     var selectedItem by rememberSaveable { mutableIntStateOf(0) }
     Column(
         modifier = Modifier
@@ -51,8 +51,9 @@ fun MainTabsRoute(
         ) {
             composable<Tab.Home> { DiscoveryRoute(navController) }
             composable<Tab.ChatList> { UserListRoute({ chatAction.invoke(it) }) }
-            composable<Tab.Profile> { ProfileRoute(signOut) }
             composable<Tab.CreateEvent> { CreateEventRoute(navController) }
+            composable<Tab.Profile> { ProfileRoute(signOut) }
+
 
             composable("event_details/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId")
@@ -104,7 +105,7 @@ sealed class Tab(val name: String) {
     @Serializable
     data object ChatList : Tab("Chats")
     @Serializable
-    data object Profile : Tab("Profile")
-    @Serializable
     data object CreateEvent: Tab("Create Event")
+    @Serializable
+    data object Profile : Tab("Profile")
 }
