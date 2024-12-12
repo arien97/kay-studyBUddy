@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -44,12 +45,12 @@ fun ProfileRoute(
         modifier
             .fillMaxSize()
     ) {
-        Text(
-            text = "Profile",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(16.dp)
-        )
+//        Text(
+//            text = "Profile",
+//            style = MaterialTheme.typography.headlineLarge,
+//            color = MaterialTheme.colorScheme.primary,
+//            modifier = Modifier.padding(16.dp)
+//        )
         ProfileScreen(navController = rememberNavController())
     }
 }
@@ -62,10 +63,12 @@ fun ProfileScreen(navController: NavHostController) {
     val events = remember {
         mutableStateOf(
             listOf(
-                Event("Calculus hw3", "Wednesday", "6-9pm", "User1"),
-                Event("Physics Lab", "Thursday", "2-4pm", "User2"),
-                Event("Group Study", "Friday", "5-7pm", "User3"),
-                Event("Chemistry Review", "Saturday", "3-5pm", "User4")
+                Event("Calculus hw3", "Wednesday", "12/11/24", "6-9pm", "User1", "MA491"),
+                Event("Physics Lab", "Thursday", "12/12/24", "2-4pm", "User2", "PH211"),
+                Event("Group Study", "Friday", "12/13/24", "5-7pm", "User3", "CS501"),
+                Event("Data Science Review", "Saturday", "12/14/24", "3-5pm", "User4", "DS201"),
+                Event("Finals Review", "Tuesday", "12/17/24", "1-3pm", "User5", "CS501"),
+                Event("Finals Review 2", "Tuesday", "12/17/24", "5-7pm", "User5", "CS501"),
             )
         )
     }
@@ -74,10 +77,18 @@ fun ProfileScreen(navController: NavHostController) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .padding(bottom = 80.dp), // Add padding to ensure the button is visible
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            item {
+                Text(
+                    text = "Profile",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = TextAlign.Left,
+                )
+            }
             item {
                 // Profile Picture and Username
                 CircleAvatar()
@@ -213,6 +224,7 @@ fun EventItem(event: Event) {
                 modifier = Modifier.weight(1f)
             ) {
                 Text(text = event.title, style = MaterialTheme.typography.titleMedium)
+                Text(text = event.className, style = MaterialTheme.typography.bodyMedium)
                 Text(text = "${event.day} ${event.timeRange}")
                 Text(text = event.username)
             }
@@ -223,6 +235,8 @@ fun EventItem(event: Event) {
 data class Event(
     val title: String,
     val day: String,
+    val date: String,
     val timeRange: String,
-    val username: String
+    val username: String,
+    val className: String
 )

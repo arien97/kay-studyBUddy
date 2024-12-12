@@ -3,6 +3,8 @@ package com.example.studybuddy.features.calendar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -19,10 +21,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
+
+data class Event(
+    val title: String,
+    val day: String,
+    val date: String,
+    val timeRange: String,
+    val username: String,
+    val className: String
+)
 
 @Composable
 fun CalendarRoute(navController: NavHostController = rememberNavController()) {
@@ -30,8 +40,9 @@ fun CalendarRoute(navController: NavHostController = rememberNavController()) {
         composable("calendar") {
             CalendarScreen(navController)
         }
-        composable("placeholder") {
-            PlaceholderScreen(navController)
+        composable("event_details/{date}") { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date")
+            EventDetailsScreen(navController, date ?: "")
         }
     }
 }
@@ -39,7 +50,24 @@ fun CalendarRoute(navController: NavHostController = rememberNavController()) {
 @Composable
 fun CalendarScreen(navController: NavHostController) {
     val showPopup = remember { mutableStateOf(false) }
-    CalendarView(showPopup, navController)
+    val events = listOf(
+        Event("Calculus hw3", "Wednesday", "12/11/24", "6-9pm", "User1", "MA491"),
+        Event("Physics Lab", "Thursday", "12/12/24", "2-4pm", "User2", "PH211"),
+        Event("Group Study", "Friday", "12/13/24", "5-7pm", "User3", "CS501"),
+        Event("Data Science Review", "Saturday", "12/14/24", "3-5pm", "User4", "DS201"),
+        Event("Finals Review", "Tuesday", "12/17/24", "1-3pm", "User5", "CS501"),
+        Event("Finals Review 2", "Tuesday", "12/17/24", "5-7pm", "User5", "CS501"),
+
+    )
+    Column {
+        Text(
+            text = "Calendar",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(16.dp)
+        )
+        CalendarView(showPopup, navController, events)
+    }
 
     if (showPopup.value) {
         AlertDialog(
@@ -56,7 +84,7 @@ fun CalendarScreen(navController: NavHostController) {
 }
 
 @Composable
-fun CalendarView(showPopup: MutableState<Boolean>, navController: NavHostController) {
+fun CalendarView(showPopup: MutableState<Boolean>, navController: NavHostController, events: List<Event>) {
     val currentMonth = remember { mutableStateOf(YearMonth.now()) }
     val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
@@ -79,7 +107,7 @@ fun CalendarView(showPopup: MutableState<Boolean>, navController: NavHostControl
         }
         Spacer(modifier = Modifier.height(16.dp))
         DaysOfWeekHeader()
-        CalendarGrid(currentMonth.value, showPopup, navController)
+        CalendarGrid(currentMonth.value, showPopup, navController, events)
     }
 }
 
@@ -99,7 +127,7 @@ fun DaysOfWeekHeader() {
 }
 
 @Composable
-fun CalendarGrid(currentMonth: YearMonth, showPopup: MutableState<Boolean>, navController: NavHostController) {
+fun CalendarGrid(currentMonth: YearMonth, showPopup: MutableState<Boolean>, navController: NavHostController, events: List<Event>) {
     val firstDayOfMonth = currentMonth.atDay(1)
     val dayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Adjust to make Sunday = 0
     val daysInMonth = currentMonth.lengthOfMonth()
@@ -116,15 +144,16 @@ fun CalendarGrid(currentMonth: YearMonth, showPopup: MutableState<Boolean>, navC
                 for (day in 0 until 7) {
                     val index = week * 7 + day
                     val dayText = calendarDays.getOrNull(index) ?: ""
+                    val eventOnThisDay = events.find { it.date.split("/")[1] == dayText && it.date.split("/")[0] == currentMonth.monthValue.toString().padStart(2, '0') }
                     Box(
                         modifier = Modifier
                             .padding(2.dp)
                             .weight(1f)
                             .aspectRatio(1f)
-                            .background(if (dayText == "15") Color(0xFFADD8E6) else Color.White)
+                            .background(if (eventOnThisDay != null) Color(0xFFADD8E6) else Color.Transparent)
                             .clickable(enabled = dayText.isNotEmpty()) {
-                                if (dayText == "15") {
-                                    navController.navigate("placeholder")
+                                if (eventOnThisDay != null) {
+                                    navController.navigate("event_details/${eventOnThisDay.date.replace("/", "-")}")
                                 } else {
                                     showPopup.value = true
                                 }
@@ -144,18 +173,52 @@ fun CalendarGrid(currentMonth: YearMonth, showPopup: MutableState<Boolean>, navC
 }
 
 @Composable
-fun PlaceholderScreen(navController: NavHostController) {
+fun EventDetailsScreen(navController: NavHostController, date: String) {
+    val events = listOf(
+        Event("Calculus hw3", "Wednesday", "12/11/24", "6-9pm", "User1", "MA491"),
+        Event("Physics Lab", "Thursday", "12/12/24", "2-4pm", "User2", "PH211"),
+        Event("Group Study", "Friday", "12/13/24", "5-7pm", "User3", "CS501"),
+        Event("Data Science Review", "Saturday", "12/14/24", "3-5pm", "User4", "DS201"),
+        Event("Finals Review", "Tuesday", "12/17/24", "1-3pm", "User5", "CS501"),
+        Event("Finals Review 2", "Tuesday", "12/17/24", "5-7pm", "User5", "CS501"),
+
+    )
+    val eventsOnThisDay = events.filter { it.date == date.replace("-", "/") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "This is a placeholder screen.")
+        Text(text = "Events on $date", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyColumn {
+            items(eventsOnThisDay) { event ->
+                EventItem(event)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { navController.popBackStack() }) {
             Text(text = "Back to Calendar")
         }
+    }
+}
+
+@Composable
+fun EventItem(event: Event) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFE0F7FA)) // Super light blue background
+            .padding(8.dp)
+    ) {
+        Text(text = event.title, style = MaterialTheme.typography.titleMedium)
+        Text(text = event.className, style = MaterialTheme.typography.bodyMedium)
+        Text(text = "${event.day} ${event.date}", style = MaterialTheme.typography.bodySmall)
+        Text(text = event.timeRange, style = MaterialTheme.typography.bodySmall)
+        Text(text = event.username, style = MaterialTheme.typography.bodySmall)
     }
 }
