@@ -50,27 +50,6 @@ fun ProfileRoute(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(16.dp)
         )
-//
-//        Image(
-//            imageVector = Icons.Default.Person,
-//            contentDescription = null,
-//            contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
-//            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-//            modifier = Modifier.fillMaxWidth(0.5f),
-//        )
-//
-//        val isLoading by viewModel.isLoading.collectAsState()
-//        if (!isLoading) {
-//            Button(
-//                content = { Text("Sign Out") },
-//                onClick = { viewModel.signOut() },
-//                modifier = Modifier.fillMaxWidth(),
-//                shape = RoundedCornerShape(10.dp),
-//            )
-//        } else {
-//            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
-//        }
-
         ProfileScreen(navController = rememberNavController())
     }
 }
@@ -109,12 +88,6 @@ fun ProfileScreen(navController: NavHostController) {
             }
 
             item {
-                // Calendar
-                CalendarView(showPopup)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = "Your Events", style = MaterialTheme.typography.titleMedium)
             }
@@ -138,14 +111,6 @@ fun ProfileScreen(navController: NavHostController) {
                 }
             }
         }
-
-        // Settings Button
-//        IconButton(
-//            onClick = { navController.navigate("settings") },
-//            modifier = Modifier.align(Alignment.TopEnd)
-//        ) {
-//            Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF1E90FF)) // Specific blue color
-//        }
 
         // Popup Message
         if (showPopup.value) {

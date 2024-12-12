@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -25,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.studybuddy.NavigationRoute
+import com.example.studybuddy.features.calendar.CalendarRoute
 import com.example.studybuddy.features.chats.UserListRoute
 import com.example.studybuddy.features.discovery.DiscoveryRoute
 import com.example.studybuddy.features.discovery.EventDetailsPage
@@ -37,7 +39,7 @@ fun MainTabsRoute(
     chatAction: (NavigationRoute.Chat) -> Unit,
 ) {
     val navController = rememberNavController()
-    val tabs = listOf(Tab.Home, Tab.ChatList, Tab.CreateEvent, Tab.Profile)
+    val tabs = listOf(Tab.Home, Tab.ChatList, Tab.CreateEvent, Tab.Calendar, Tab.Profile)
     var selectedItem by rememberSaveable { mutableIntStateOf(0) }
     Column(
         modifier = Modifier
@@ -53,6 +55,7 @@ fun MainTabsRoute(
             composable<Tab.ChatList> { UserListRoute({ chatAction.invoke(it) }) }
             composable<Tab.CreateEvent> { CreateEventRoute(navController) }
             composable<Tab.Profile> { ProfileRoute(signOut) }
+            composable<Tab.Calendar> { CalendarRoute() }
 
 
             composable("event_details/{eventId}") { backStackEntry ->
@@ -74,6 +77,7 @@ fun MainTabsRoute(
                             Tab.ChatList -> Icons.Default.Chat
                             Tab.Profile -> Icons.Default.Person
                             Tab.CreateEvent -> Icons.Default.Add
+                            Tab.Calendar -> Icons.Default.CalendarMonth
                         },
                         contentDescription = null
                     ) },
@@ -108,4 +112,6 @@ sealed class Tab(val name: String) {
     data object CreateEvent: Tab("Create Event")
     @Serializable
     data object Profile : Tab("Profile")
+    @Serializable
+    data object Calendar: Tab("Calendar")
 }
