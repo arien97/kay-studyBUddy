@@ -87,4 +87,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
 
+    implementation ("com.google.accompanist:accompanist-pager:0.24.13-rc")
+
 }
