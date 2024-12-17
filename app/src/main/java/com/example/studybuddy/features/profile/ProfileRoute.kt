@@ -67,6 +67,11 @@ fun ProfileScreen(navController: NavHostController, signOut: () -> Unit, deleteA
             )
         )
     }
+//    val events = remember {
+//        mutableStateOf(
+//            listOf<Event>() // Empty list to simulate no events
+//        )
+//    }
     val username by viewModel.username.collectAsState()
     val isEditing = remember { mutableStateOf(false) }
     val newUsername = remember { mutableStateOf(username) }
@@ -94,106 +99,116 @@ fun ProfileScreen(navController: NavHostController, signOut: () -> Unit, deleteA
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.Start
+                .padding(16.dp)
         ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Profile",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(16.dp)
-                    )
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                item {
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Log Out", style = MaterialTheme.typography.bodyMedium)
-                        IconButton(onClick = { signOut() }) {
-                            Icon(Icons.Default.ExitToApp, contentDescription = "Sign Out")
-                        }
-                    }
-                }
-            }
-            item {
-                // Profile Picture and Username
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    CircleAvatar()
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        if (isEditing.value) {
-                            TextField(
-                                value = newUsername.value,
-                                onValueChange = { newUsername.value = it },
-                                label = { Text("Username") }
-                            )
-                            Button(onClick = {
-                                viewModel.updateUsername(newUsername.value)
-                                isEditing.value = false
-                            }) {
-                                Text("Save")
-                            }
-                        } else {
-                            Text(text = username, style = MaterialTheme.typography.titleLarge)
-                            IconButton(onClick = { isEditing.value = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit Profile")
+                        Text(
+                            text = "Profile",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "Log Out", style = MaterialTheme.typography.bodyMedium)
+                            IconButton(onClick = { signOut() }) {
+                                Icon(Icons.Default.ExitToApp, contentDescription = "Sign Out")
                             }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Your Events", style = MaterialTheme.typography.titleMedium)
-            }
-
-            // Events Section
-            val eventsToShow = if (showAllEvents.value) events.value else events.value.take(3)
-            items(eventsToShow) { event ->
-                EventItem(event)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            item {
-                // Show More/Show Less Button
-                if (events.value.size > 3) {
-                    Button(
-                        onClick = { showAllEvents.value = !showAllEvents.value },
-                        colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))
+                item {
+                    // Profile Picture and Username
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (showAllEvents.value) "Show Less" else "Show More", color = Color.White)
+                        CircleAvatar()
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            if (isEditing.value) {
+                                TextField(
+                                    value = newUsername.value,
+                                    onValueChange = { newUsername.value = it },
+                                    label = { Text("Username") }
+                                )
+                                Button(onClick = {
+                                    viewModel.updateUsername(newUsername.value)
+                                    isEditing.value = false
+                                }) {
+                                    Text("Save")
+                                }
+                            } else {
+                                Text(text = username, style = MaterialTheme.typography.titleLarge)
+                                IconButton(onClick = { isEditing.value = true }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Profile")
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = "Your Events", style = MaterialTheme.typography.titleMedium)
+                }
+
+                // Events Section
+                if (events.value.isEmpty()) {
+                    item {
+                        Text(text = "No events created yet. Start by creating a new event!", style = MaterialTheme.typography.bodyMedium)
+                    }
+                } else {
+                    val eventsToShow = if (showAllEvents.value) events.value else events.value.take(3)
+                    items(eventsToShow) { event ->
+                        EventItem(event)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    if (events.value.size > 3) {
+                        item {
+                            // Show More/Show Less Button
+                            Button(
+                                onClick = { showAllEvents.value = !showAllEvents.value },
+                                colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))
+                            ) {
+                                Text(if (showAllEvents.value) "Show Less" else "Show More", color = Color.White)
+                            }
+                        }
                     }
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Delete Account",
-                        color = Color.Red,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { showDialog.value = true }
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            Text(
+                text = "Delete Account",
+                color = Color.Red,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { showDialog.value = true }
+            )
         }
     }
 }
