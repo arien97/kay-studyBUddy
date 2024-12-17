@@ -7,6 +7,7 @@ import com.example.studybuddy.utils.ToastNotifier
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -24,12 +25,21 @@ class ProfileViewModel @Inject constructor(
     private val _signOut = Channel<Unit>(Channel.CONFLATED)
     val signOut get() = _signOut.receiveAsFlow()
 
+    private val _username = MutableStateFlow("Username")
+    val username: StateFlow<String> = _username.asStateFlow()
+
     fun signOut() {
         viewModelScope.launch {
             _isLoading.value = true
             authRepository.signOut()
                 .fold({ _signOut.send(Unit) }, { toastNotifier.showMessage(it.message) })
             _isLoading.value = false
+        }
+    }
+
+    fun updateUsername(newUsername: String) {
+        viewModelScope.launch {
+            _username.value = newUsername
         }
     }
 }

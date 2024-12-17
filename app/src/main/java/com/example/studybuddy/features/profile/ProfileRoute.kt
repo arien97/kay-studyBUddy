@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,6 +34,7 @@ import java.util.*
 @Composable
 fun ProfileRoute(
     signOut: () -> Unit,
+    deleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -45,20 +47,13 @@ fun ProfileRoute(
         modifier
             .fillMaxSize()
     ) {
-//        Text(
-//            text = "Profile",
-//            style = MaterialTheme.typography.headlineLarge,
-//            color = MaterialTheme.colorScheme.primary,
-//            modifier = Modifier.padding(16.dp)
-//        )
-        ProfileScreen(navController = rememberNavController())
+        ProfileScreen(navController = rememberNavController(), signOut, deleteAccount, viewModel)
     }
 }
 
 @Composable
-fun ProfileScreen(navController: NavHostController) {
+fun ProfileScreen(navController: NavHostController, signOut: () -> Unit, deleteAccount: () -> Unit, viewModel: ProfileViewModel) {
     val context = LocalContext.current
-    val showPopup = remember { mutableStateOf(false) }
     val showAllEvents = remember { mutableStateOf(false) }
     val events = remember {
         mutableStateOf(
@@ -72,29 +67,90 @@ fun ProfileScreen(navController: NavHostController) {
             )
         )
     }
+    val username by viewModel.username.collectAsState()
+    val isEditing = remember { mutableStateOf(false) }
+    val newUsername = remember { mutableStateOf(username) }
+    val showDialog = remember { mutableStateOf(false) }
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDialog.value = false },
+            title = { Text("Delete Account") },
+            text = { Text("Are you sure you want to delete your account? This action cannot be undone.") },
+            confirmButton = {
+                Button(onClick = {
+                    deleteAccount()
+                    signOut()
+                }) {
+                    Text("Proceed")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDialog.value = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
             item {
-                Text(
-                    text = "Profile",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Left,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Profile",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Log Out", style = MaterialTheme.typography.bodyMedium)
+                        IconButton(onClick = { signOut() }) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = "Sign Out")
+                        }
+                    }
+                }
             }
             item {
                 // Profile Picture and Username
-                CircleAvatar()
-                Text(text = "Edit", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Username", style = MaterialTheme.typography.titleLarge)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    CircleAvatar()
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        if (isEditing.value) {
+                            TextField(
+                                value = newUsername.value,
+                                onValueChange = { newUsername.value = it },
+                                label = { Text("Username") }
+                            )
+                            Button(onClick = {
+                                viewModel.updateUsername(newUsername.value)
+                                isEditing.value = false
+                            }) {
+                                Text("Save")
+                            }
+                        } else {
+                            Text(text = username, style = MaterialTheme.typography.titleLarge)
+                            IconButton(onClick = { isEditing.value = true }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit Profile")
+                            }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
@@ -121,20 +177,23 @@ fun ProfileScreen(navController: NavHostController) {
                     }
                 }
             }
-        }
 
-        // Popup Message
-        if (showPopup.value) {
-            AlertDialog(
-                onDismissRequest = { showPopup.value = false },
-                title = { Text(text = "Events") },
-                text = { Text("You have no events on this day, go to Home to create an event.") },
-                confirmButton = {
-                    Button(onClick = { showPopup.value = false }, colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))) {
-                        Text("OK")
-                    }
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Delete Account",
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { showDialog.value = true }
+                    )
                 }
-            )
+            }
         }
     }
 }
@@ -146,65 +205,6 @@ fun CircleAvatar() {
             .size(100.dp)
             .background(Color(0xFF1E90FF), shape = CircleShape) // Specific blue color
     )
-}
-
-@Composable
-fun CalendarView(showPopup: MutableState<Boolean>) {
-    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { currentMonth.value = currentMonth.value.minusMonths(1) }) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Previous Month")
-            }
-            Text(
-                text = currentMonth.value.format(monthFormatter),
-                style = MaterialTheme.typography.titleMedium
-            )
-            IconButton(onClick = { currentMonth.value = currentMonth.value.plusMonths(1) }) {
-                Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Next Month")
-            }
-        }
-        CalendarGrid(currentMonth.value, showPopup)
-    }
-}
-
-@Composable
-fun CalendarGrid(currentMonth: YearMonth, showPopup: MutableState<Boolean>) {
-    val firstDayOfMonth = currentMonth.atDay(1)
-    val dayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Adjust to make Sunday = 0
-    val daysInMonth = currentMonth.lengthOfMonth()
-    val days = (1..daysInMonth).toList()
-    val calendarDays = MutableList(42) { "" }
-
-    for (i in days.indices) {
-        calendarDays[dayOfWeek + i] = days[i].toString()
-    }
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        for (week in 0 until 6) {
-            Row {
-                for (day in 0 until 7) {
-                    val index = week * 7 + day
-                    val dayText = calendarDays.getOrNull(index) ?: ""
-                    Box(
-                        modifier = Modifier
-                            .padding(2.dp)
-                            .size(40.dp) // Adjusted size to fit all dates
-                            .background(if (dayText.isEmpty()) Color.Transparent else Color.White) // Light blue color for empty days
-                            .clickable(enabled = dayText.isNotEmpty()) { showPopup.value = true }
-                    ) {
-                        Text(
-                            text = dayText,
-                            modifier = Modifier.align(Alignment.Center),
-                            color = if (dayText.isEmpty()) Color.Gray else Color.Black
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable

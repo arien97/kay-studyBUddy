@@ -33,9 +33,11 @@ import com.example.studybuddy.features.discovery.EventDetailsPage
 import com.example.studybuddy.features.discovery.CreateEventRoute
 import com.example.studybuddy.features.profile.ProfileRoute
 import kotlinx.serialization.Serializable
+
 @Composable
 fun MainTabsRoute(
     signOut: () -> Unit,
+    deleteAccount: () -> Unit,
     chatAction: (NavigationRoute.Chat) -> Unit,
 ) {
     val navController = rememberNavController()
@@ -54,15 +56,13 @@ fun MainTabsRoute(
             composable<Tab.Home> { DiscoveryRoute(navController) }
             composable<Tab.ChatList> { UserListRoute({ chatAction.invoke(it) }) }
             composable<Tab.CreateEvent> { CreateEventRoute(navController) }
-            composable<Tab.Profile> { ProfileRoute(signOut) }
+            composable<Tab.Profile> { ProfileRoute(signOut, deleteAccount) }
             composable<Tab.Calendar> { CalendarRoute() }
-
 
             composable("event_details/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId")
                 EventDetailsPage(navController, eventId ?: return@composable)
             }
-
         }
         NavigationBar(
             modifier = Modifier.fillMaxWidth(),
@@ -102,6 +102,7 @@ fun MainTabsRoute(
         }
     }
 }
+
 @Serializable
 sealed class Tab(val name: String) {
     @Serializable
