@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -34,9 +38,10 @@ import androidx.navigation.compose.composable
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.VerticalPager
-import com.google.accompanist.pager.rememberPagerState
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -64,7 +69,6 @@ fun CalendarRoute(navController: NavHostController = rememberNavController()) {
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun CalendarScreen(navController: NavHostController) {
     val showPopup = remember { mutableStateOf(false) }
@@ -77,7 +81,7 @@ fun CalendarScreen(navController: NavHostController) {
     )
 
     val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    val pagerState = rememberPagerState(initialPage = 1)
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = {12})
     val displayedMonth by remember {
         derivedStateOf {
             currentMonth.value.plusMonths((pagerState.currentPage - 1).toLong())
@@ -93,7 +97,6 @@ fun CalendarScreen(navController: NavHostController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Calendar",
@@ -108,6 +111,7 @@ fun CalendarScreen(navController: NavHostController) {
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 16.dp)
+                .align(Alignment.CenterHorizontally),
         )
 
         // Month Navigation
@@ -137,14 +141,29 @@ fun CalendarScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Continuous Calendar Scroll
+        val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
+        val pageHeight = (screenHeightDp / 2.5f)
+
         VerticalPager(
             state = pagerState,
-            count = 12,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            pageSize = PageSize.Fixed(pageHeight)
         ) { page ->
             val month = currentMonth.value.plusMonths((page - 1).toLong())
+
+            // Check if this month is the same as the displayed month
+            val isCurrentMonth = month == displayedMonth
+
+            // Set modifier to grey out months that aren't the displayed month
+            val monthModifier = if (isCurrentMonth) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier.fillMaxSize().graphicsLayer { alpha = 0.3f }
+            }
+
+            // Display the month's content
             MonthView(
+                modifier = monthModifier,
                 month = month,
                 currentMonth = currentMonth.value,
                 navController = navController,
@@ -171,6 +190,7 @@ fun CalendarScreen(navController: NavHostController) {
 
 @Composable
 fun MonthView(
+    modifier: Modifier = Modifier,
     month: YearMonth,
     currentMonth: YearMonth,
     navController: NavHostController,
@@ -184,17 +204,23 @@ fun MonthView(
     val days = (1..daysInMonth).toList()
     val calendarDays = MutableList(42) { "" }
 
+    // Populate the calendar days
     for (i in days.indices) {
         calendarDays[dayOfWeek + i] = days[i].toString()
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        // Month title
         Text(
             text = month.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(8.dp)
         )
 
+        // Days of the Week Header
+        DaysOfWeekHeader()
+
+        // Calendar grid
         for (week in 0 until 6) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -241,53 +267,6 @@ fun MonthView(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun CalendarView(
-    showPopup: MutableState<Boolean>,
-    navController: NavHostController,
-    events: List<Event>,
-    lazyListState: LazyListState,
-    scrollToIndex: Int
-) {
-    val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            state = lazyListState // Attach lazyListState for scrolling
-        ) {
-            items(listOf(currentMonth.value.minusMonths(1), currentMonth.value, currentMonth.value.plusMonths(1))) { month ->
-                Text(
-                    text = month.format(monthFormatter), // Format the `YearMonth` instance
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = if (month == currentMonth.value) MaterialTheme.colorScheme.primary else Color.Gray
-                    ),
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .clickable {
-                            currentMonth.value = month // Update the displayed month on click
-                        }
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        DaysOfWeekHeader()
-        CalendarGrid(currentMonth.value, showPopup, navController, events)
-    }
-
-    // Use LaunchedEffect to call the suspend function
-    LaunchedEffect(key1 = scrollToIndex) {
-        lazyListState.animateScrollToItem(scrollToIndex)
     }
 }
 

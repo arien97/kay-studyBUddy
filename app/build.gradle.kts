@@ -88,5 +88,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
 
     implementation ("com.google.accompanist:accompanist-pager:0.24.13-rc")
+    implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
 
 }
