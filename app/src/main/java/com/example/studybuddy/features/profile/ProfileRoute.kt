@@ -186,7 +186,7 @@ fun ProfileScreen(navController: NavHostController, signOut: () -> Unit, deleteA
                             // Show More/Show Less Button
                             Button(
                                 onClick = { showAllEvents.value = !showAllEvents.value },
-                                colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))
+                                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
                             ) {
                                 Text(if (showAllEvents.value) "Show Less" else "Show More", color = Color.White)
                             }
@@ -218,7 +218,7 @@ fun CircleAvatar() {
     Box(
         modifier = Modifier
             .size(100.dp)
-            .background(Color(0xFF1E90FF), shape = CircleShape) // Specific blue color
+            .background(MaterialTheme.colorScheme.primary, shape = CircleShape) // Specific blue color
     )
 }
 
@@ -228,7 +228,7 @@ fun EventItem(event: Event) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE0F7FA)) // Super light blue background
+            .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(2.dp))
             .padding(8.dp)
     ) {
         Row(

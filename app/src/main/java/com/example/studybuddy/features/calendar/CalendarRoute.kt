@@ -42,6 +42,7 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -55,6 +56,8 @@ data class Event(
     val username: String,
     val className: String
 )
+
+val currentDate = LocalDate.now()
 
 @Composable
 fun CalendarRoute(navController: NavHostController = rememberNavController()) {
@@ -88,107 +91,120 @@ fun CalendarScreen(navController: NavHostController) {
         }
     }
 
-    val currentDate = LocalDate.now()
     val currentDayText = "${currentDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())}, ${currentDate.format(DateTimeFormatter.ofPattern("MMMM dd"))}"
 
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-    ) {
-        Text(
-            text = "Calendar",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically, // Aligns children along the vertical center
-            modifier = Modifier.fillMaxWidth()
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Main Calendar Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            // Display current day
             Text(
-                text = currentDayText,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
+                text = "Calendar",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
-            // "Today" Button that jumps to current month
-            Button(
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Display current day
+                Text(
+                    text = currentDayText,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                // "Today" Button that jumps to the current month
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val todayPage = 1 // Assuming the current month is at page index 1
+                            pagerState.scrollToPage(todayPage)
+                        }
+                    }
+                ) {
+                    Text(text = "Today")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
+            val pageHeight = (screenHeightDp / 2.5f)
+
+            VerticalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                pageSize = PageSize.Fixed(pageHeight)
+            ) { page ->
+                val month = currentMonth.value.plusMonths((page - 1).toLong())
+
+                // Check if this month is the same as the displayed month
+                val isCurrentMonth = month == displayedMonth
+
+                // Set modifier to grey out months that aren't the displayed month
+                val monthModifier = if (isCurrentMonth) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.fillMaxSize().graphicsLayer { alpha = 0.3f }
+                }
+
+                // Display the month's content
+                MonthView(
+                    modifier = monthModifier,
+                    month = month,
+                    currentMonth = currentMonth.value,
+                    navController = navController,
+                    events = events,
+                    showPopup = showPopup,
+                    currentDate = currentDate
+                )
+            }
+        }
+
+        // Sidebar with Up and Down Arrows
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+                .background(MaterialTheme.colorScheme.primary) // Set background color
+                .padding(4.dp) // Inner padding for the buttons
+        ) {
+            IconButton(
                 onClick = {
                     coroutineScope.launch {
-                        val todayPage = 1 // Assuming the current month is at page index 1
-                        pagerState.scrollToPage(todayPage)
+                        pagerState.scrollToPage(pagerState.currentPage - 1)
                     }
                 }
             ) {
-                Text(text = "Today")
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Previous Month",
+                    tint = Color.White // Set arrow color to white
+                )
             }
-        }
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Month Navigation and Today Button
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            IconButton(onClick = {
-                coroutineScope.launch {
-                    pagerState.scrollToPage(pagerState.currentPage - 1)
+            Spacer(modifier = Modifier.height(8.dp))
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        pagerState.scrollToPage(pagerState.currentPage + 1)
+                    }
                 }
-            }) {
-                Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = "Previous Month")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Next Month",
+                    tint = Color.White // Set arrow color to white
+                )
             }
-            Text(
-                text = displayedMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
-                style = MaterialTheme.typography.titleLarge
-            )
-            IconButton(onClick = {
-                coroutineScope.launch {
-                    pagerState.scrollToPage(pagerState.currentPage + 1)
-                }
-            }) {
-                Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = "Next Month")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
-        val pageHeight = (screenHeightDp / 2.5f)
-
-        VerticalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            pageSize = PageSize.Fixed(pageHeight)
-        ) { page ->
-            val month = currentMonth.value.plusMonths((page - 1).toLong())
-
-            // Check if this month is the same as the displayed month
-            val isCurrentMonth = month == displayedMonth
-
-            // Set modifier to grey out months that aren't the displayed month
-            val monthModifier = if (isCurrentMonth) {
-                Modifier.fillMaxSize()
-            } else {
-                Modifier.fillMaxSize().graphicsLayer { alpha = 0.3f }
-            }
-
-            // Display the month's content
-            MonthView(
-                modifier = monthModifier,
-                month = month,
-                currentMonth = currentMonth.value,
-                navController = navController,
-                events = events,
-                showPopup = showPopup,
-                currentDate = currentDate
-            )
         }
     }
 
@@ -205,6 +221,7 @@ fun CalendarScreen(navController: NavHostController) {
         )
     }
 }
+
 
 @Composable
 fun MonthView(
@@ -260,7 +277,7 @@ fun MonthView(
                             .padding(2.dp)
                             .weight(1f)
                             .aspectRatio(1f)
-                            .background(if (eventOnThisDay != null) Color(0xFFADD8E6) else Color.Transparent)
+                            .background(if (eventOnThisDay != null) MaterialTheme.colorScheme.surface else Color.Transparent)
                             .clickable(enabled = isCurrentMonth) {
                                 if (eventOnThisDay != null) {
                                     navController.navigate("event_details/${eventOnThisDay.date.replace("/", "-")}")
@@ -322,6 +339,8 @@ fun EventDetailsScreen(navController: NavHostController, date: String) {
     )
     val eventsOnThisDay = events.filter { it.date == date.replace("-", "/") }
 
+    val formattedDate = currentDate.format(DateTimeFormatter.ofPattern("MMMM d"))
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -329,7 +348,15 @@ fun EventDetailsScreen(navController: NavHostController, date: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Events on $date", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = "Events on $formattedDate",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.wrapContentWidth(),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = false,
+            color = MaterialTheme.colorScheme.primary
+        )
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {
             items(eventsOnThisDay) { event ->
@@ -349,7 +376,7 @@ fun EventItem(event: Event) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE0F7FA)) // Super light blue background
+            .background(MaterialTheme.colorScheme.surface)
             .padding(8.dp)
     ) {
         Text(text = event.title, style = MaterialTheme.typography.titleMedium)
