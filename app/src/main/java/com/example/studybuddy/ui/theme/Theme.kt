@@ -46,7 +46,7 @@ fun AppTheme(
 ) {
 
     MaterialTheme(
-        colorScheme = ColorScheme,
+        colorScheme = PinkColorScheme,
         typography = Typography,
         content = content
     )

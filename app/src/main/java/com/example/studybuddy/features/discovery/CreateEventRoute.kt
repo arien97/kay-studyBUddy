@@ -56,13 +56,7 @@ fun CreateEventRoute(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = { Text("Create Event", color = MaterialTheme.colorScheme.onPrimary) },
-                backgroundColor = MaterialTheme.colorScheme.primary,
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                }
+                backgroundColor = MaterialTheme.colorScheme.primary
             )
         }
     ) {
