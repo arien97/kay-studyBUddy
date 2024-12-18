@@ -1,8 +1,10 @@
 package com.example.studybuddy.features.discovery
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,6 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.google.android.gms.maps.model.*
+import com.google.maps.android.compose.*
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 
 val eventList = mutableStateListOf<Event>()
 
@@ -38,7 +44,13 @@ fun CreateEventRoute(navController: NavController) {
     var location by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var timeRange by remember { mutableStateOf(8f..20f) } // Default slider range (e.g., 8 AM - 8 PM)
+    var timeRange by remember { mutableStateOf(8f..20f) }
+    val initialPosition = LatLng(42.3505, -71.1054) // CAS
+    var markerPosition by remember { mutableStateOf(initialPosition) }
+    val markerState = remember { MarkerState(position = initialPosition) }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(markerState.position, 12f)
+    }
 
     Scaffold(
         topBar = {
@@ -92,7 +104,6 @@ fun CreateEventRoute(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Time Slider
             SelectTimeSlotSlider(
                 timeRange = timeRange,
                 onTimeRangeChanged = { timeRange = it }
@@ -100,13 +111,32 @@ fun CreateEventRoute(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Save Event Button
+            // draggable maps thing: note: test with real phone
+            Text("Choose Event Location:", style = MaterialTheme.typography.bodyLarge)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+            ) {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState
+                ) {
+                    Marker(
+                        state = markerState,
+                        draggable = true,
+                        onClick = {
+                            false
+                        }
+                    )
+                }
+            }
+
+
             Button(
                 onClick = {
-                    // Format the time range as text
                     val timeText = formatTimeRange(timeRange)
 
-                    // Add the new event to the global list
                     eventList.add(
                         Event(
                             id = (eventList.size + 1).toString(),
@@ -114,14 +144,15 @@ fun CreateEventRoute(navController: NavController) {
                             className = className,
                             startTime = timeRange.start,
                             endTime = timeRange.endInclusive,
-                            time = timeText, // Use formatted time text
+                            time = timeText,
                             date = date,
                             location = location,
                             description = description,
-                            postedBy = "User"
+                            postedBy = "User",
+                            latitude = markerPosition.latitude,
+                            longitude = markerPosition.longitude,
                         )
                     )
-                    // Navigate back to the previous screen
                     navController.navigateUp()
                 },
                 modifier = Modifier.align(Alignment.End)

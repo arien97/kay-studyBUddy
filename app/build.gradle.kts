@@ -86,6 +86,10 @@ dependencies {
     implementation("androidx.compose.runtime:runtime:1.5.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
+    implementation("com.google.android.gms:play-services-maps:18.1.0")
+    implementation("com.google.maps.android:maps-compose:4.0.0")
+    implementation("com.google.maps.android:maps-compose-utils:4.0.0")
+    implementation("com.google.maps.android:maps-compose-widgets:4.0.0")
 
     implementation ("com.google.accompanist:accompanist-pager:0.24.13-rc")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")

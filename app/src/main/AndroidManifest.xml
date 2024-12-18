@@ -14,6 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Studybuddy"
         tools:targetApi="tiramisu">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyC2sxS3zVvb1Ds4ugp5girIQlpptZwMBgg" />
         <activity
             android:name="com.example.studybuddy.MainActivity"
             android:exported="true"

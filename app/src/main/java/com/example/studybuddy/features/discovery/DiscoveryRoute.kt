@@ -3,6 +3,7 @@ package com.example.studybuddy.features.discovery
 import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,6 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -328,6 +335,18 @@ fun EventDetailsPage(navController: NavController, eventId: String) {
                         text = "Date: ${event.date}",
                         style = MaterialTheme.typography.bodyMedium
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                    ) {
+                        EventLocationMap(
+                            latitude = event.latitude,
+                            longitude = event.longitude,
+                            locationName = event.location
+                        )
+                    }
                 }
             }
         } else {
@@ -337,6 +356,24 @@ fun EventDetailsPage(navController: NavController, eventId: String) {
                 color = MaterialTheme.colorScheme.error
             )
         }
+    }
+}
+
+@Composable
+fun EventLocationMap(latitude: Double, longitude: Double, locationName: String) {
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 14f)
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState
+    ) {
+        Marker(
+            state = MarkerState(position = LatLng(latitude, longitude)),
+            title = locationName,
+            snippet = "Event Location"
+        )
     }
 }
 
@@ -351,7 +388,9 @@ val sampleEvent1 = Event(
     date = "Friday Dec 6",
     postedBy = "KAYS",
     location = "CAS 225",
-    description = "Group study session to review for the final! Bring some snacks. We will do review questions and go over slides."
+    description = "Group study session to review for the final! Bring some snacks. We will do review questions and go over slides.",
+    latitude = 42.3505,
+    longitude = -71.1054
 )
 
 val sampleEvent2 = Event(
@@ -364,7 +403,9 @@ val sampleEvent2 = Event(
     date = "Friday Dec 6",
     postedBy = "Yuting",
     location = "KCB 101",
-    description = "We will be reviewing all lectures together and re-doing tophat questions"
+    description = "We will be reviewing all lectures together and re-doing tophat questions",
+    latitude = 42.3505,
+    longitude = -71.1054
 )
 
 val sampleEvent3 = Event(
@@ -377,7 +418,9 @@ val sampleEvent3 = Event(
     date = "Friday Dec 6",
     postedBy = "Yuting",
     location = "My house",
-    description = "Sad Time"
+    description = "Sad Time",
+    latitude = 42.3505,
+    longitude = -71.1054
 )
 
 val sampleEvents: List<Event> = listOf(sampleEvent1, sampleEvent2, sampleEvent3)
@@ -392,6 +435,8 @@ data class Event(
     val date: String,
     val postedBy: String,
     val location: String,
-    val description: String
+    val description: String,
+    val latitude: Double,
+    val longitude: Double
 )
 

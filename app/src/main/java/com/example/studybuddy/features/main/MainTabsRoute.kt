@@ -110,7 +110,7 @@ sealed class Tab(val name: String) {
     @Serializable
     data object ChatList : Tab("Chats")
     @Serializable
-    data object CreateEvent: Tab("Create Event")
+    data object CreateEvent: Tab("New Event")
     @Serializable
     data object Profile : Tab("Profile")
     @Serializable
