@@ -81,7 +81,7 @@ fun CalendarScreen(navController: NavHostController) {
     )
 
     val currentMonth = remember { mutableStateOf(YearMonth.now()) }
-    val pagerState = rememberPagerState(initialPage = 1, pageCount = {12})
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 12 })
     val displayedMonth by remember {
         derivedStateOf {
             currentMonth.value.plusMonths((pagerState.currentPage - 1).toLong())
@@ -105,16 +105,34 @@ fun CalendarScreen(navController: NavHostController) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Display current day
-        Text(
-            text = currentDayText,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-                .align(Alignment.CenterHorizontally),
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically, // Aligns children along the vertical center
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Display current day
+            Text(
+                text = currentDayText,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            // "Today" Button that jumps to current month
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        val todayPage = 1 // Assuming the current month is at page index 1
+                        pagerState.scrollToPage(todayPage)
+                    }
+                }
+            ) {
+                Text(text = "Today")
+            }
+        }
 
-        // Month Navigation
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Month Navigation and Today Button
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
@@ -139,7 +157,7 @@ fun CalendarScreen(navController: NavHostController) {
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
         val pageHeight = (screenHeightDp / 2.5f)
@@ -260,7 +278,11 @@ fun MonthView(
                                     shape = CircleShape
                                 )
                                 .padding(8.dp),
-                            color = if (isCurrentMonth) Color.Black else Color.Gray,
+                            color = when {
+                                isToday -> Color.White // Current day text color is white
+                                isCurrentMonth -> Color.Black // Default color for current month's days
+                                else -> Color.Gray // Default color for other months' days
+                            },
                             fontSize = 16.sp
                         )
                     }
@@ -284,71 +306,6 @@ fun DaysOfWeekHeader() {
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center
             )
-        }
-    }
-}
-
-@Composable
-fun CalendarGrid(
-    currentMonth: YearMonth,
-    showPopup: MutableState<Boolean>,
-    navController: NavHostController,
-    events: List<Event>
-) {
-    val firstDayOfMonth = currentMonth.atDay(1)
-    val dayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Adjust to make Sunday = 0
-    val daysInMonth = currentMonth.lengthOfMonth()
-    val days = (1..daysInMonth).toList()
-    val calendarDays = MutableList(42) { "" }
-
-    // Populate calendar days with appropriate dates
-    for (i in days.indices) {
-        calendarDays[dayOfWeek + i] = days[i].toString()
-    }
-
-    // Calendar Grid
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        for (week in 0 until 6) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                for (day in 0 until 7) {
-                    val index = week * 7 + day
-                    val dayText = calendarDays.getOrNull(index) ?: ""
-                    val eventOnThisDay = events.find {
-                        it.date.split("/")[1] == dayText &&
-                                it.date.split("/")[0] == currentMonth.monthValue.toString().padStart(2, '0')
-                    }
-
-                    // Display each day
-                    Box(
-                        modifier = Modifier
-                            .padding(2.dp)
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .background(if (eventOnThisDay != null) Color(0xFFADD8E6) else Color.Transparent)
-                            .clickable(enabled = dayText.isNotEmpty()) {
-                                if (eventOnThisDay != null) {
-                                    navController.navigate("event_details/${eventOnThisDay.date.replace("/", "-")}")
-                                } else {
-                                    showPopup.value = true
-                                }
-                            }
-                    ) {
-                        Text(
-                            text = dayText,
-                            modifier = Modifier.align(Alignment.Center),
-                            color = if (dayText.isEmpty()) Color.Gray else Color.Black,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-            }
         }
     }
 }
