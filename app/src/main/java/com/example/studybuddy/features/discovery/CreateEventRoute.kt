@@ -29,7 +29,9 @@ fun CreateEventRoute(
     viewModel: CreateEventViewModel = hiltViewModel()
 ) {
     val event by viewModel.event.collectAsState()
+    val courses by viewModel.courses.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     // Maps related state
     val initialPosition = LatLng(42.3505, -71.1054) // CAS
@@ -59,10 +61,9 @@ fun CreateEventRoute(
         }, content = { padding ->
             Column(
                 modifier = Modifier
-                    .padding(padding)  // Add scaffold padding
-                    .verticalScroll(rememberScrollState())  // Make content scrollable
-                    .padding(horizontal = 64.dp)  // Keep your horizontal padding
-
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 64.dp)
             ) {
                 // Input fields
                 OutlinedTextField(
@@ -71,21 +72,52 @@ fun CreateEventRoute(
                     label = { Text("Event Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = event.location.orEmpty(),
                     onValueChange = { viewModel.edit { copy(location = it) } },
                     label = { Text("Location / Classroom") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = event.course.orEmpty(),
-                    onValueChange = { viewModel.edit { copy(course = it) } },
-                    label = { Text("Course") },
+
+                // Course Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) {
+                    OutlinedTextField(
+                        value = event.course.orEmpty(),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Course") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        courses.forEach { course ->
+                            DropdownMenuItem(
+                                text = { Text(course) },
+                                onClick = {
+                                    viewModel.edit { copy(course = course) }
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = event.date.orEmpty(),
                     onValueChange = { },
@@ -102,13 +134,16 @@ fun CreateEventRoute(
                         .fillMaxWidth()
                         .clickable { showDialog = true },
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = event.description.orEmpty(),
                     onValueChange = { viewModel.edit { copy(description = it) } },
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Time Slider
@@ -136,7 +171,6 @@ fun CreateEventRoute(
                             state = markerState,
                             draggable = true,
                             onClick = {
-                                // Update the marker position in the ViewModel
                                 viewModel.edit {
                                     copy(
                                         latitude = markerState.position.latitude,
@@ -157,7 +191,6 @@ fun CreateEventRoute(
                 if (!isLoading) {
                     Button(
                         onClick = {
-                            // Update location coordinates before saving
                             viewModel.edit {
                                 copy(
                                     latitude = markerState.position.latitude,
@@ -211,19 +244,6 @@ fun SelectTimeSlotSlider(
             modifier = Modifier.fillMaxWidth()
         )
     }
-}
-
-fun formatTimeRange(timeRange: ClosedFloatingPointRange<Float>): String {
-    fun formatTime(hour: Float): String {
-        val hourInt = hour.toInt()
-        return when {
-            hourInt == 0 -> "12 AM"
-            hourInt < 12 -> "$hourInt AM"
-            hourInt == 12 -> "12 PM"
-            else -> "${hourInt - 12} PM"
-        }
-    }
-    return "${formatTime(timeRange.start)} - ${formatTime(timeRange.endInclusive)}"
 }
 
 @Composable
