@@ -29,6 +29,15 @@ fun EventDetailsRoute(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
+    val timeLabels = (0..24).map { i ->
+        when {
+            i == 0 -> "12 AM"
+            i < 12 -> "$i AM"
+            i == 12 -> "12 PM"
+            else -> "${i - 12} PM"
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -151,7 +160,8 @@ fun EventDetailsRoute(
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = "Time: ${event?.startTime} - ${event?.endTime}",
+                            //text = "Time: ${event?.startTime} - ${event?.endTime}",
+                            text = "Time: ${timeLabels[event?.startTime!!.toInt()]} - ${timeLabels[event?.endTime!!.toInt()]}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -204,3 +214,4 @@ fun EventDetailsRoute(
         }
     }
 }
+

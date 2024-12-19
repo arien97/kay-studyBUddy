@@ -45,7 +45,7 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
     var selectedFilter by remember { mutableStateOf<String?>(null) }
     var timeRange by remember { mutableStateOf(4f..20f) }
     val courses by viewModel.courses.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }  // Add this line
+    var searchText by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
@@ -56,10 +56,11 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Searching by event title
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it  },
-            label = { Text("Search events") },
+            value = searchText,
+            onValueChange = { searchText = it },
+            label = { Text("Search event title") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -92,11 +93,11 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
                 val isWithinClassFilter =
                     selectedFilter.isNullOrEmpty() || event.course == selectedFilter
                 val isWithinTimeFilter = eventStart < sliderEnd && eventEnd > sliderStart
-                val matchesSearch = searchQuery.isEmpty() ||
-                        event.course?.contains(searchQuery, ignoreCase = true) == true ||
-                        event.title?.contains(searchQuery, ignoreCase = true) == true  // Add title search
 
-                isWithinClassFilter && isWithinTimeFilter && matchesSearch
+                val matchesSearch =
+                    event.title?.contains(searchText, ignoreCase = true)
+
+                isWithinClassFilter && isWithinTimeFilter && matchesSearch == true
             }
 
             items(filteredEvents) { event ->
@@ -106,8 +107,6 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
                 )
             }
         }
-
-
     }
 }
 
@@ -187,3 +186,5 @@ fun TimeSlotSlider(
         }
     }
 }
+
+

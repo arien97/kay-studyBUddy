@@ -26,6 +26,15 @@ fun EventPreviewCard(
     modifier: Modifier = Modifier,
     showArrow: Boolean = true
 ) {
+    val timeLabels = (0..24).map { i ->
+        when {
+            i == 0 -> "12 AM"
+            i < 12 -> "$i AM"
+            i == 12 -> "12 PM"
+            else -> "${i - 12} PM"
+        }
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -52,17 +61,17 @@ fun EventPreviewCard(
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    text = event.course.orEmpty(),
+                    text = "Course: ${ event.course.orEmpty()}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = event.date.orEmpty(),
+                    text = "Date: ${event.date.orEmpty()}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 if (event.startTime != null && event.endTime != null) {
                     Text(
-                        text = "${event.startTime} - ${event.endTime}",
+                        text = "Time: ${timeLabels[event.startTime.toInt()]} - ${timeLabels[event.endTime.toInt()]}",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -81,3 +90,4 @@ fun EventPreviewCard(
         }
     }
 }
+
