@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.firebase.firestore.ktx)
     debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.androidx.navigation.compose)
@@ -93,5 +94,9 @@ dependencies {
 
     implementation ("com.google.accompanist:accompanist-pager:0.24.13-rc")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.30.1")
+
+    implementation(libs.coil3.coil.compose)
+    implementation(libs.coil3.network.ktor)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
 }

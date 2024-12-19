@@ -5,7 +5,8 @@ coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.11.00"
-
+coilCompose = "3.0.0-rc01"
+coilNetworkKtor = "3.0.0-alpha08"
 
 androidDesugarJdkLibs = "2.0.4"
 androidxNavigation = "2.8.4"
@@ -24,6 +25,7 @@ okhttp = "4.12.0"
 retrofit = "2.11.0"
 retrofitKotlinxSerializationJson = "1.0.0"
 androidxHiltNavigationCompose = "1.2.0"
+firebaseFirestoreKtx = "25.1.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -57,6 +59,12 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidxHiltNavigationCompose" }
+coil3-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref = "coilNetworkKtor" }
+coil3-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

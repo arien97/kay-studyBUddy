@@ -31,13 +31,16 @@ class AuthRepository @Inject constructor(
 
     val currentUserId = auth.currentUser?.uid
 
+    fun getCurrentUserEmail(): String? {
+        return auth.currentUser?.email
+    }
+
     suspend fun signIn(email: String, password: String): Result<Unit> = suspendRunCatching {
         withContext(Dispatchers.IO) {
             val result = auth.signInWithEmailAndPassword(email, password).await()
             requireNotNull(result.user)
         }
     }
-
 
     suspend fun signInByLink(email: String): Result<Unit> = suspendRunCatching {
         withContext(Dispatchers.IO) {
@@ -71,5 +74,4 @@ class AuthRepository @Inject constructor(
     suspend fun signOut(): Result<Unit> = suspendRunCatching {
         withContext(Dispatchers.IO) { auth.signOut() }
     }
-
 }

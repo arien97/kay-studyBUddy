@@ -307,4 +307,21 @@ class EventsRepository @Inject constructor() {
         }
     }
 
+    fun observeEvents(): Flow<List<Event>> = callbackFlow {
+        val eventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val events = snapshot.children.mapNotNull {
+                    val event = it.getValue(Event::class.java) ?: return@mapNotNull null
+                    val id = it.key ?: return@mapNotNull null
+                    return@mapNotNull event.copy(id = id)
+                }
+                this@callbackFlow.trySendBlocking(events)
+            }
+
+            override fun onCancelled(error: DatabaseError) = Unit
+        }
+        eventsDatabaseReference.addValueEventListener(eventListener)
+        awaitClose { eventsDatabaseReference.removeEventListener(eventListener) }
+    }
+
 }

@@ -1,38 +1,20 @@
 package com.example.studybuddy.features.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,10 +24,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 import com.example.studybuddy.components.EventPreviewCard
-import com.example.studybuddy.domain.Event
+import com.example.studybuddy.domain.ProfilePicRepository
+import com.example.studybuddy.domain.User
 
 @Composable
 fun ProfileRoute(
@@ -87,10 +72,17 @@ fun ProfileScreen(
     val showAllEvents = remember { mutableStateOf(false) }
 
     val events by viewModel.events.collectAsState()
-    val username by viewModel.username.collectAsState()
+    val userEmail by viewModel.userEmail.collectAsState()
+    val profilePictureUrl by viewModel.profilePictureUrl.collectAsState()
     val isEditing = remember { mutableStateOf(false) }
-    val newUsername = remember { mutableStateOf(username) }
+    val newProfilePictureUrl = remember { mutableStateOf(profilePictureUrl) }
     val showDialog = remember { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.uploadProfilePicture("userId", it, { newProfilePictureUrl.value = it }, { /* Handle failure */ }) }
+    }
 
     if (showDialog.value) {
         AlertDialog(
@@ -148,33 +140,17 @@ fun ProfileScreen(
                     }
                 }
                 item {
-                    // Profile Picture and Username
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    // Profile Picture and User Email
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        CircleAvatar()
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            if (isEditing.value) {
-                                TextField(
-                                    value = newUsername.value,
-                                    onValueChange = { newUsername.value = it },
-                                    label = { Text("Username") }
-                                )
-                                Button(onClick = {
-                                    viewModel.updateUsername(newUsername.value)
-                                    isEditing.value = false
-                                }) {
-                                    Text("Save")
-                                }
-                            } else {
-                                Text(text = username, style = MaterialTheme.typography.titleLarge)
-                                IconButton(onClick = { isEditing.value = true }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Edit Profile")
-                                }
-                            }
+                        ProfilePicture(imageUrl = profilePictureUrl)
+                        IconButton(onClick = { launcher.launch("image/*") }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit Profile Picture")
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = userEmail, style = MaterialTheme.typography.titleLarge)
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                 }
@@ -183,7 +159,6 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(text = "Your Events", style = MaterialTheme.typography.titleMedium)
                 }
-
 
                 // Events Section
                 if (events.isEmpty()) {
@@ -207,12 +182,11 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-
                     if (events.size > 3) {
                         item {
                             Button(
                                 onClick = { showAllEvents.value = !showAllEvents.value },
-                                colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))
+                                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
                             ) {
                                 Text(
                                     if (showAllEvents.value) "Show Less" else "Show More",
@@ -224,10 +198,9 @@ fun ProfileScreen(
                 }
             }
 
-
             Text(
                 text = "Change course",
-                color = Color.Blue,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .clickable { changeCourse.invoke() }
@@ -247,35 +220,28 @@ fun ProfileScreen(
 }
 
 @Composable
-fun CircleAvatar() {
+fun ProfilePicture(
+    imageUrl: String?
+) {
     Box(
         modifier = Modifier
             .size(100.dp)
-            .background(Color(0xFF1E90FF), shape = CircleShape) // Specific blue color
-    )
-}
-
-@Composable
-fun EventItem(event: Event) {
-    Spacer(modifier = Modifier.height(8.dp))
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFE0F7FA)) // Super light blue background
-            .padding(8.dp)
+            .background(MaterialTheme.colorScheme.primary, shape = CircleShape),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(text = event.title.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                Text(text = event.course.orEmpty(), style = MaterialTheme.typography.bodyMedium)
-                Text(text = event.date.orEmpty())
-                Text(text = event.authorUsername.orEmpty())
-            }
+        if (imageUrl != null) {
+            Image(
+                painter = rememberAsyncImagePainter(imageUrl),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(50.dp)
+            )
         }
     }
 }
