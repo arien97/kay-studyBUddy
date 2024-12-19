@@ -1,135 +1,230 @@
 package com.example.studybuddy.features.onboarding
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.studybuddy.R
 import kotlinx.coroutines.launch
+
+data class OnboardingPage(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val title: String,
+    val description: String
+)
+
+private val onboardingPages = listOf(
+    OnboardingPage(
+        icon = Icons.Filled.Search,
+        title = "Discover Study Events",
+        description = "Find and join study sessions created by fellow students in your area. " +
+                "Connect with peers who share your academic interests and create meaningful study partnerships " +
+                "to enhance your learning experience."
+    ),
+    OnboardingPage(
+        icon = Icons.Filled.Groups,
+        title = "Course Communities",
+        description = "Automatically join chat groups for all your enrolled courses. " +
+                "Stay connected with classmates, share resources, ask questions, and collaborate on assignments " +
+                "in real-time course-specific communities."
+    ),
+    OnboardingPage(
+        icon = Icons.Filled.CalendarMonth,
+        title = "Smart Calendar",
+        description = "Keep track of all study sessions and course events in one place. " +
+                "Seamlessly add study meetups to your calendar, receive reminders, and manage your academic schedule " +
+                "with ease while staying in sync with your study partners."
+    )
+)
 
 @Composable
 fun OnboardingRoute(
     backAction: () -> Unit,
     nextAction: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pageCount = 4
+    val pageCount = onboardingPages.size
+
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .safeDrawingPadding()
     ) {
         val pagerState = rememberPagerState(pageCount = { pageCount })
+
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.weight(1f)
         ) { page ->
-            Column(
-                Modifier
+            OnboardingPage(
+                page = onboardingPages[page],
+                modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp)
-            ) {
-                Text(
-                    text = "Page: $page",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.headlineLarge
-                )
-                Text(
-                    text = "Some content",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                    .padding(24.dp)
+            )
+        }
 
-            }
-        }
-        Row(Modifier.padding(horizontal = 16.dp)) {
-            Indicators(pagerState, Modifier.weight(1f))
-            Button(
-                onClick = {
-                    if (pagerState.currentPage == 0) {
-                        backAction.invoke()
-                    } else {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                        }
+        NavigationButtons(
+            currentPage = pagerState.currentPage,
+            pageCount = pageCount,
+            onBackClick = {
+                if (pagerState.currentPage == 0) {
+                    backAction()
+                } else {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
                     }
-                },
-                modifier = Modifier.size(56.dp),
-                shape = RoundedCornerShape(56.dp),
-                contentPadding = PaddingValues(0.dp),
-                content = {
-                    Image(
-                        painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = null
-                    )
                 }
-            )
-            Button(
-                onClick = {
-                    if (pagerState.currentPage == pageCount - 1) {
-                        nextAction.invoke()
-                    } else {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
+            },
+            onNextClick = {
+                if (pagerState.currentPage == pageCount - 1) {
+                    nextAction()
+                } else {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
                     }
-                },
-                modifier = Modifier.size(56.dp),
-                shape = RoundedCornerShape(56.dp),
-                contentPadding = PaddingValues(0.dp),
-                content = {
-                    Image(
-                        painterResource(R.drawable.ic_arrow_forward),
-                        contentDescription = null
-                    )
                 }
-            )
-        }
+            },
+            modifier = Modifier.padding(16.dp)
+        )
     }
-
 }
 
 @Composable
-private fun Indicators(
-    pagerState: androidx.compose.foundation.pager.PagerState,
-    modifier: Modifier
+private fun OnboardingPage(
+    page: OnboardingPage,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier
-            .padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.Center
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        repeat(pagerState.pageCount) { iteration ->
-            val color =
-                if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.6f)
+                .padding(bottom = 32.dp)
+                .padding(horizontal = 32.dp)
+        ) {
             Box(
                 modifier = Modifier
-                    .padding(2.dp)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = page.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(120.dp),
+                    tint = Color.White
+                )
+            }
+        }
+
+        Text(
+            text = page.title,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Text(
+            text = page.description,
+            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun NavigationButtons(
+    currentPage: Int,
+    pageCount: Int,
+    onBackClick: () -> Unit,
+    onNextClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PageIndicators(
+            currentPage = currentPage,
+            pageCount = pageCount,
+            modifier = Modifier.weight(1f)
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilledIconButton(
+                onClick = onBackClick,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Previous"
+                )
+            }
+
+            FilledIconButton(
+                onClick = onNextClick,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowForward,
+                    contentDescription = "Next"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PageIndicators(
+    currentPage: Int,
+    pageCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(pageCount) { iteration ->
+            val color = if (currentPage == iteration)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
                     .clip(CircleShape)
                     .background(color)
-                    .size(16.dp)
+                    .size(12.dp)
             )
         }
     }
