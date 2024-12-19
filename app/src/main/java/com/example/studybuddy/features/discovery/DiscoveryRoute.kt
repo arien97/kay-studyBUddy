@@ -45,6 +45,8 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
     var selectedFilter by remember { mutableStateOf<String?>(null) }
     var timeRange by remember { mutableStateOf(4f..20f) }
     val courses by viewModel.courses.collectAsState()
+    var searchText by remember { mutableStateOf("") }
+
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
             text = "Home Page",
@@ -54,10 +56,11 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Searching by event title
         OutlinedTextField(
-            value = "",
-            onValueChange = { /* Handle search HERE !!*/ },
-            label = { Text("Search events") },
+            value = searchText,
+            onValueChange = { searchText = it },
+            label = { Text("Search event title") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -91,7 +94,10 @@ fun DiscoveryRoute(navController: NavController, viewModel: DiscoveryViewModel =
                     selectedFilter.isNullOrEmpty() || event.course == selectedFilter
                 val isWithinTimeFilter = eventStart < sliderEnd && eventEnd > sliderStart
 
-                isWithinClassFilter && isWithinTimeFilter
+                val matchesSearch =
+                    event.title?.contains(searchText, ignoreCase = true)
+
+                isWithinClassFilter && isWithinTimeFilter && matchesSearch == true
             }
 
             items(filteredEvents) { event ->
@@ -180,3 +186,5 @@ fun TimeSlotSlider(
         }
     }
 }
+
+

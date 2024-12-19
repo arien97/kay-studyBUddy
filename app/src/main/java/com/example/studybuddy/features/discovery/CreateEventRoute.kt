@@ -157,7 +157,7 @@ fun CreateEventRoute(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Google Maps Component
-                Text("Choose Event Location:", style = MaterialTheme.typography.bodyLarge)
+                Text("Estimate Event Location:", style = MaterialTheme.typography.bodyLarge)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
