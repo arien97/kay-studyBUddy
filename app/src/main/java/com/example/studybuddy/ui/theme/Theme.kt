@@ -14,29 +14,29 @@ private val ColorScheme = lightColorScheme(
 /*
 I want pink -Yuting
  */
-private val PinkColorScheme = lightColorScheme(
-    primary = Color(0xFFF06292),
+private val RedColorScheme = lightColorScheme(
+    primary = Color(0xFFCC1F03), // New primary color
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFFFC1E3),
+    primaryContainer = Color(0xFFFFB4A0), // Lighter tint of the primary color
     onPrimaryContainer = Color.Black,
-    secondary = Color(0xFFEC407A),
+    secondary = Color(0xFF9E1A02), // A slightly darker version of the primary
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFFCDD2),
+    secondaryContainer = Color(0xFFFFDAD3), // Light tint of secondary
     onSecondaryContainer = Color.Black,
-    tertiary = Color(0xFFF48FB1),
-    onTertiary = Color.Black,
-    background = Color(0xFFFFEBEE),
+    tertiary = Color(0xFFD53C2E), // A medium-tone complement
+    onTertiary = Color.White,
+    background = Color(0xFFFFF3F2), // Light background tone
     onBackground = Color.Black,
-    surface = Color(0xFFFFEBEE),
+    surface = Color(0xFFFFF3F2),
     onSurface = Color.Black,
-    error = Color(0xFFD32F2F),
+    error = Color(0xFFD32F2F), // Keeping error color unchanged
     onError = Color.White,
-    outline = Color(0xFFE91E63),
-    surfaceVariant = Color(0xFFFFE4E6),
+    outline = Color(0xFFCC5A4D), // Slightly desaturated primary for outlines
+    surfaceVariant = Color(0xFFFFE4E0), // Lighter variant for surfaces
     onSurfaceVariant = Color.Black,
-    inverseSurface = Color(0xFF880E4F),
+    inverseSurface = Color(0xFF730000), // Darker inverse surface
     inverseOnSurface = Color.White,
-    inversePrimary = Color(0xFFD81B60)
+    inversePrimary = Color(0xFFFF6B4A) // Bright complementary tone for inverse primary
 )
 
 
@@ -46,7 +46,7 @@ fun AppTheme(
 ) {
 
     MaterialTheme(
-        colorScheme = PinkColorScheme,
+        colorScheme = RedColorScheme,
         typography = Typography,
         content = content
     )
