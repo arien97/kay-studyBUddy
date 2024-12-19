@@ -1,48 +1,16 @@
 package com.example.studybuddy.features.discovery
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RangeSlider
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.example.studybuddy.domain.Event
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -50,38 +18,42 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventDetailsPage(
-    navController: NavController,
-    eventId: String,
-    viewModel: EventDetailsViewModel = hiltViewModel(
-        creationCallback = { f: EventDetailsViewModel.ViewModelFactory -> f.create(eventId) }
-    )
+fun EventDetailsRoute(
+    onBackClick: () -> Unit,
+    viewModel: EventDetailsViewModel = hiltViewModel()
 ) {
     val event by viewModel.event.collectAsState()
+    val isAddedToCalendar by viewModel.isAddedToCalendar.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Event Details", color = MaterialTheme.colorScheme.onPrimary) },
-                backgroundColor = MaterialTheme.colorScheme.primary,
+                title = { Text("Event Details") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         }
-    ) {
+    ) { padding ->
         if (event != null) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(padding)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -100,7 +72,7 @@ fun EventDetailsPage(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Profile Icon",
+                            contentDescription = "Author",
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -112,29 +84,51 @@ fun EventDetailsPage(
                 }
 
                 item {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    Button(
+                        onClick = { viewModel.toggleCalendarStatus() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isAddedToCalendar)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.primary
+                        )
                     ) {
-                        Button(
-                            onClick = { /* Add to Calendar logic */ },
-                            modifier = Modifier.weight(1f)
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Add to Calendar")
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Loading...")
+                            } else {
+                                Text(
+                                    if (isAddedToCalendar) "Remove from Calendar"
+                                    else "Add to Calendar"
+                                )
+                            }
                         }
-                        Button(
-                            onClick = { /* Message logic */ },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Message")
-                        }
+                    }
+
+                    if (error != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = error ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
 
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Description:",
+                            text = "Description",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -157,7 +151,7 @@ fun EventDetailsPage(
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = "Time: ${event?.startTime}",
+                            text = "Time: ${event?.startTime} - ${event?.endTime}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
@@ -172,26 +166,26 @@ fun EventDetailsPage(
                 }
 
                 item {
-                    // Google Map
-                    Card(
+                    ElevatedCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            .height(200.dp)
                     ) {
-                        val singapore = event?.let {
+                        val eventLocation = event?.let {
                             LatLng(it.latitude ?: 0.0, it.longitude ?: 0.0)
                         } ?: LatLng(0.0, 0.0)
 
+                        val cameraPositionState = rememberCameraPositionState {
+                            position = CameraPosition.fromLatLngZoom(eventLocation, 15f)
+                        }
+
                         GoogleMap(
                             modifier = Modifier.fillMaxSize(),
-                            cameraPositionState = rememberCameraPositionState {
-                                position = CameraPosition.fromLatLngZoom(singapore, 15f)
-                            }
+                            cameraPositionState = cameraPositionState
                         ) {
                             event?.let {
                                 Marker(
-                                    state = MarkerState(position = singapore),
+                                    state = MarkerState(position = eventLocation),
                                     title = it.title,
                                     snippet = it.location
                                 )
@@ -201,11 +195,12 @@ fun EventDetailsPage(
                 }
             }
         } else {
-            Text(
-                text = "Event not found",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
     }
 }

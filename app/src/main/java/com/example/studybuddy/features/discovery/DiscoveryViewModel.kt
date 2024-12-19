@@ -24,7 +24,8 @@ class DiscoveryViewModel @Inject constructor(
 
     val courses = profileRepository.observeCourses()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
-    val events = eventsRepository.observeEvents()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Use observeAllEvents() for discovery page to show all available events
+    val events = eventsRepository.observeAllEvents()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -30,7 +30,7 @@ import com.example.studybuddy.NavigationRoute
 import com.example.studybuddy.features.calendar.CalendarRoute
 import com.example.studybuddy.features.chats.UserListRoute
 import com.example.studybuddy.features.discovery.DiscoveryRoute
-import com.example.studybuddy.features.discovery.EventDetailsPage
+import com.example.studybuddy.features.discovery.EventDetailsRoute
 import com.example.studybuddy.features.discovery.CreateEventRoute
 import com.example.studybuddy.features.profile.ProfileRoute
 import kotlinx.serialization.Serializable
@@ -72,7 +72,9 @@ fun MainTabsRoute(
 
             composable("event_details/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId")
-                EventDetailsPage(navController, eventId ?: return@composable)
+                EventDetailsRoute(
+                    onBackClick = { navController.navigateUp() }
+                )
             }
         }
         NavigationBar(
@@ -86,7 +88,7 @@ fun MainTabsRoute(
                         Icon(
                             imageVector = when (item) {
                                 Tab.Home -> Icons.Default.Home
-                                Tab.ChatList -> Icons.Default.Chat
+                                Tab.ChatList -> Icons.AutoMirrored.Filled.Chat
                                 Tab.Profile -> Icons.Default.Person
                                 Tab.CreateEvent -> Icons.Default.Add
                                 Tab.Calendar -> Icons.Default.CalendarMonth

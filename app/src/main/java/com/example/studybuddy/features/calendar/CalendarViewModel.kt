@@ -12,14 +12,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    authRepository: AuthRepository,
     eventsRepository: EventsRepository,
 ) : ViewModel() {
 
-    private val currentUserId = authRepository.currentUserId
-
-    val events = eventsRepository.observeEvents()
-        .map { events -> events.filter { it.authorUUID == currentUserId } }
+    val events = eventsRepository.observeCalendarAndPersonalEvents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
 }

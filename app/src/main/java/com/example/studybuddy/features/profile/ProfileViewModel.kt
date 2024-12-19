@@ -27,10 +27,7 @@ class ProfileViewModel @Inject constructor(
     private val toastNotifier: ToastNotifier,
 ) : ViewModel() {
 
-    private val currentUserId = authRepository.currentUserId
-
-    val events = eventsRepository.observeEvents()
-        .map { events -> events.filter { it.authorUUID == currentUserId } }
+    val events = eventsRepository.observePersonalEvents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isLoading = MutableStateFlow(false)
