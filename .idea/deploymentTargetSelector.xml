@@ -2,12 +2,21 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
+<<<<<<< HEAD
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2024-12-03T17:12:19.242281Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=/Users/konst/.android/avd/Pixel_Fold_API_35.avd" />
+=======
+      <SelectionState runConfigName="Unnamed">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2024-12-19T00:20:59.347335Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/kobajgenti/.android/avd/Pixel_8a_API_34-ext12.avd" />
+>>>>>>> my-temp-branch
             </handle>
           </Target>
         </DropdownSelection>

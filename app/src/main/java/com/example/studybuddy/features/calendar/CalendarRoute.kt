@@ -1,25 +1,15 @@
 package com.example.studybuddy.features.calendar
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.snapping.SnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PageSize
-import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
@@ -27,62 +17,38 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.*
-import androidx.compose.foundation.pager.VerticalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.navigation.compose.rememberNavController
+import com.example.studybuddy.components.EventPreviewCard
+import com.example.studybuddy.domain.Event
+import com.example.studybuddy.utils.DateUtils
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-
-
-data class Event(
-    val title: String,
-    val day: String,
-    val date: String,
-    val timeRange: String,
-    val username: String,
-    val className: String
-)
-
-val currentDate = LocalDate.now()
+import java.util.Locale
 
 @Composable
-fun CalendarRoute(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = "calendar") {
-        composable("calendar") {
-            CalendarScreen(navController)
-        }
-        composable("event_details/{date}") { backStackEntry ->
-            val date = backStackEntry.arguments?.getString("date")
-            EventDetailsScreen(navController, date ?: "")
-        }
-    }
+fun CalendarRoute(
+    navController: NavHostController = rememberNavController(),
+    viewModel: CalendarViewModel = hiltViewModel()
+) {
+    val events: List<Event> by viewModel.events.collectAsState()
+    CalendarScreen(navController, events)
 }
 
 @Composable
-fun CalendarScreen(navController: NavHostController) {
+fun CalendarScreen(navController: NavHostController, events: List<Event>) {
     val showPopup = remember { mutableStateOf(false) }
-    val events = listOf(
-        Event("Calculus hw3", "Wednesday", "12/11/24", "6-9pm", "User1", "MA491"),
-        Event("Physics Lab", "Thursday", "12/12/24", "2-4pm", "User2", "PH211"),
-        Event("Group Study", "Friday", "12/13/24", "5-7pm", "User3", "CS501"),
-        Event("Finals Review", "Tuesday", "12/17/24", "1-3pm", "User5", "CS501"),
-        Event("Finals Review 2", "Tuesday", "12/17/24", "5-7pm", "User5", "CS501")
-    )
-
     val currentMonth = remember { mutableStateOf(YearMonth.now()) }
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 12 })
     val displayedMonth by remember {
@@ -91,12 +57,13 @@ fun CalendarScreen(navController: NavHostController) {
         }
     }
 
-    val currentDayText = "${currentDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())}, ${currentDate.format(DateTimeFormatter.ofPattern("MMMM dd"))}"
+    val currentDate = LocalDate.now()
+    val currentDayText = "${currentDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())}, " +
+            "${currentDate.format(DateTimeFormatter.ofPattern("MMMM dd"))}"
 
     val coroutineScope = rememberCoroutineScope()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Main Calendar Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -114,18 +81,15 @@ fun CalendarScreen(navController: NavHostController) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Display current day
                 Text(
                     text = currentDayText,
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
-                // "Today" Button that jumps to the current month
                 Button(
                     onClick = {
                         coroutineScope.launch {
-                            val todayPage = 1 // Assuming the current month is at page index 1
-                            pagerState.scrollToPage(todayPage)
+                            pagerState.scrollToPage(1)
                         }
                     }
                 ) {
@@ -144,18 +108,13 @@ fun CalendarScreen(navController: NavHostController) {
                 pageSize = PageSize.Fixed(pageHeight)
             ) { page ->
                 val month = currentMonth.value.plusMonths((page - 1).toLong())
-
-                // Check if this month is the same as the displayed month
                 val isCurrentMonth = month == displayedMonth
-
-                // Set modifier to grey out months that aren't the displayed month
                 val monthModifier = if (isCurrentMonth) {
                     Modifier.fillMaxSize()
                 } else {
                     Modifier.fillMaxSize().graphicsLayer { alpha = 0.3f }
                 }
 
-                // Display the month's content
                 MonthView(
                     modifier = monthModifier,
                     month = month,
@@ -168,15 +127,14 @@ fun CalendarScreen(navController: NavHostController) {
             }
         }
 
-        // Sidebar with Up and Down Arrows
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(8.dp)
-                .background(MaterialTheme.colorScheme.primary) // Set background color
-                .padding(4.dp) // Inner padding for the buttons
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(4.dp)
         ) {
             IconButton(
                 onClick = {
@@ -188,7 +146,7 @@ fun CalendarScreen(navController: NavHostController) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = "Previous Month",
-                    tint = Color.White // Set arrow color to white
+                    tint = Color.White
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -202,7 +160,7 @@ fun CalendarScreen(navController: NavHostController) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "Next Month",
-                    tint = Color.White // Set arrow color to white
+                    tint = Color.White
                 )
             }
         }
@@ -222,7 +180,6 @@ fun CalendarScreen(navController: NavHostController) {
     }
 }
 
-
 @Composable
 fun MonthView(
     modifier: Modifier = Modifier,
@@ -234,28 +191,25 @@ fun MonthView(
     currentDate: LocalDate
 ) {
     val firstDayOfMonth = month.atDay(1)
-    val dayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Adjust to make Sunday = 0
+    val dayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
     val daysInMonth = month.lengthOfMonth()
     val days = (1..daysInMonth).toList()
     val calendarDays = MutableList(42) { "" }
+    var selectedDayEvents by remember { mutableStateOf<List<Event>?>(null) }
 
-    // Populate the calendar days
     for (i in days.indices) {
         calendarDays[dayOfWeek + i] = days[i].toString()
     }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        // Month title
         Text(
             text = month.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(8.dp)
         )
 
-        // Days of the Week Header
         DaysOfWeekHeader()
 
-        // Calendar grid
         for (week in 0 until 6) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -265,22 +219,27 @@ fun MonthView(
                     val index = week * 7 + day
                     val dayText = calendarDays.getOrNull(index) ?: ""
                     val isCurrentMonth = dayText.isNotEmpty()
-                    val eventOnThisDay = events.find {
-                        it.date.split("/")[1] == dayText &&
-                                it.date.split("/")[0] == month.monthValue.toString().padStart(2, '0')
+
+                    val eventsOnThisDay = events.filter {
+                        val eventDate = it.date?.let(DateUtils::stringToDate) ?: return@filter false
+                        eventDate.dayOfMonth.toString() == dayText &&
+                                eventDate.monthValue == month.monthValue &&
+                                eventDate.year == month.year
                     }
+
                     val isToday = isCurrentMonth && currentDate.dayOfMonth.toString() == dayText &&
-                            currentDate.monthValue == month.monthValue && currentDate.year == month.year
+                            currentDate.monthValue == month.monthValue &&
+                            currentDate.year == month.year
 
                     Box(
                         modifier = Modifier
                             .padding(2.dp)
                             .weight(1f)
                             .aspectRatio(1f)
-                            .background(if (eventOnThisDay != null) MaterialTheme.colorScheme.surface else Color.Transparent)
+                            .background(if (eventsOnThisDay.isNotEmpty()) MaterialTheme.colorScheme.surface else Color.Transparent)
                             .clickable(enabled = isCurrentMonth) {
-                                if (eventOnThisDay != null) {
-                                    navController.navigate("event_details/${eventOnThisDay.date.replace("/", "-")}")
+                                if (eventsOnThisDay.isNotEmpty()) {
+                                    selectedDayEvents = eventsOnThisDay
                                 } else {
                                     showPopup.value = true
                                 }
@@ -295,11 +254,7 @@ fun MonthView(
                                     shape = CircleShape
                                 )
                                 .padding(8.dp),
-                            color = when {
-                                isToday -> Color.White // Current day text color is white
-                                isCurrentMonth -> Color.Black // Default color for current month's days
-                                else -> Color.Gray // Default color for other months' days
-                            },
+                            color = if (isCurrentMonth) Color.Black else Color.Gray,
                             fontSize = 16.sp
                         )
                     }
@@ -307,7 +262,18 @@ fun MonthView(
             }
         }
     }
+    selectedDayEvents?.let { events ->
+        DayEventsDialog(
+            events = events,
+            onEventClick = { event ->
+                navController.navigate("event_details/${event.id}")
+                selectedDayEvents = null  // Close dialog after navigation
+            },
+            onDismiss = { selectedDayEvents = null }
+        )
+    }
 }
+
 
 @Composable
 fun DaysOfWeekHeader() {
@@ -328,61 +294,29 @@ fun DaysOfWeekHeader() {
 }
 
 @Composable
-fun EventDetailsScreen(navController: NavHostController, date: String) {
-    val events = listOf(
-        Event("Calculus hw3", "Wednesday", "12/11/24", "6-9pm", "User1", "MA491"),
-        Event("Physics Lab", "Thursday", "12/12/24", "2-4pm", "User2", "PH211"),
-        Event("Group Study", "Friday", "12/13/24", "5-7pm", "User3", "CS501"),
-        Event("Data Science Review", "Saturday", "12/14/24", "3-5pm", "User4", "DS201"),
-        Event("Finals Review", "Tuesday", "12/17/24", "1-3pm", "User5", "CS501"),
-        Event("Finals Review 2", "Tuesday", "12/17/24", "5-7pm", "User5", "CS501")
-    )
-    val eventsOnThisDay = events.filter { it.date == date.replace("-", "/") }
-
-    val formattedDate = currentDate.format(DateTimeFormatter.ofPattern("MMMM d"))
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = "Events on $formattedDate",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.wrapContentWidth(),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            softWrap = false,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn {
-            items(eventsOnThisDay) { event ->
-                EventItem(event)
-                Spacer(modifier = Modifier.height(8.dp))
+fun DayEventsDialog(
+    events: List<Event>,
+    onEventClick: (Event) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Events") },
+        text = {
+            LazyColumn {
+                items(events) { event ->
+                    EventPreviewCard(
+                        event = event,
+                        onClick = { onEventClick(event) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Close")
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.popBackStack() }) {
-            Text(text = "Back to Calendar")
-        }
-    }
-}
-
-@Composable
-fun EventItem(event: Event) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(8.dp)
-    ) {
-        Text(text = event.title, style = MaterialTheme.typography.titleMedium)
-        Text(text = event.className, style = MaterialTheme.typography.bodyMedium)
-        Text(text = "${event.day} ${event.date}", style = MaterialTheme.typography.bodySmall)
-        Text(text = event.timeRange, style = MaterialTheme.typography.bodySmall)
-        Text(text = event.username, style = MaterialTheme.typography.bodySmall)
-    }
+    )
 }

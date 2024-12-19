@@ -21,14 +21,27 @@ sealed interface NavigationRoute {
     data object Onboarding : NavigationRoute
 
     @Serializable
+    data object Course : NavigationRoute
+
+    @Serializable
     data object Tabs : NavigationRoute
 
 
     @Serializable
-    data class Chat(
-        val chatRoomUUID: String,
-        val registerUUID: String,
-        val opponentUUID: String,
-    ) : NavigationRoute
+    sealed interface Chat {
+
+        @Serializable
+        data class PrivateChat(
+            val chatRoomUUID: String,
+            val registerUUID: String,
+            val opponentUUID: String,
+        ) : Chat
+
+        @Serializable
+        data class CourseChat(
+            val course: String,
+        ) : Chat
+
+    }
 
 }

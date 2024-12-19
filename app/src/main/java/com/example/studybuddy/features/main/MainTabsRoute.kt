@@ -1,4 +1,5 @@
 package com.example.studybuddy.features.main
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +39,7 @@ import kotlinx.serialization.Serializable
 fun MainTabsRoute(
     signOut: () -> Unit,
     deleteAccount: () -> Unit,
+    changeCourse: () -> Unit,
     chatAction: (NavigationRoute.Chat) -> Unit,
 ) {
     val navController = rememberNavController()
@@ -56,8 +58,17 @@ fun MainTabsRoute(
             composable<Tab.Home> { DiscoveryRoute(navController) }
             composable<Tab.ChatList> { UserListRoute({ chatAction.invoke(it) }) }
             composable<Tab.CreateEvent> { CreateEventRoute(navController) }
-            composable<Tab.Profile> { ProfileRoute(signOut, deleteAccount) }
-            composable<Tab.Calendar> { CalendarRoute() }
+            composable<Tab.Profile> {
+                ProfileRoute(
+                    signOut = signOut,
+                    changeCourse = changeCourse,
+                    deleteAccount = deleteAccount,
+                    onNavigateToEventDetails = { eventId ->
+                        navController.navigate("event_details/$eventId")
+                    }
+                )
+            }
+            composable<Tab.Calendar> { CalendarRoute(navController) }
 
             composable("event_details/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId")
@@ -71,16 +82,18 @@ fun MainTabsRoute(
         ) {
             tabs.forEachIndexed { index, item ->
                 NavigationBarItem(
-                    icon = { Icon(
-                        imageVector = when (item) {
-                            Tab.Home -> Icons.Default.Home
-                            Tab.ChatList -> Icons.Default.Chat
-                            Tab.Profile -> Icons.Default.Person
-                            Tab.CreateEvent -> Icons.Default.Add
-                            Tab.Calendar -> Icons.Default.CalendarMonth
-                        },
-                        contentDescription = null
-                    ) },
+                    icon = {
+                        Icon(
+                            imageVector = when (item) {
+                                Tab.Home -> Icons.Default.Home
+                                Tab.ChatList -> Icons.Default.Chat
+                                Tab.Profile -> Icons.Default.Person
+                                Tab.CreateEvent -> Icons.Default.Add
+                                Tab.Calendar -> Icons.Default.CalendarMonth
+                            },
+                            contentDescription = null
+                        )
+                    },
                     label = { Text(item.name) },
                     selected = selectedItem == index,
                     colors = NavigationBarItemDefaults.colors(
@@ -107,12 +120,16 @@ fun MainTabsRoute(
 sealed class Tab(val name: String) {
     @Serializable
     data object Home : Tab("Home")
+
     @Serializable
     data object ChatList : Tab("Chats")
+
     @Serializable
-    data object CreateEvent: Tab("New Event")
+    data object CreateEvent : Tab("Create Event")
+
     @Serializable
     data object Profile : Tab("Profile")
+
     @Serializable
-    data object Calendar: Tab("Calendar")
+    data object Calendar : Tab("Calendar")
 }

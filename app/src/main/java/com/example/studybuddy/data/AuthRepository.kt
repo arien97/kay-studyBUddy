@@ -29,6 +29,8 @@ class AuthRepository @Inject constructor(
         return auth.currentUser != null //&& auth.currentUser?.isEmailVerified == true
     }
 
+    val currentUserId = auth.currentUser?.uid
+
     suspend fun signIn(email: String, password: String): Result<Unit> = suspendRunCatching {
         withContext(Dispatchers.IO) {
             val result = auth.signInWithEmailAndPassword(email, password).await()
@@ -65,7 +67,6 @@ class AuthRepository @Inject constructor(
         requireNotNull(result.user)
         profileRepository.createOrUpdateProfileToFirebase(User())
     }
-
 
     suspend fun signOut(): Result<Unit> = suspendRunCatching {
         withContext(Dispatchers.IO) { auth.signOut() }

@@ -1,40 +1,58 @@
 package com.example.studybuddy.features.profile
 
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.*
+import com.example.studybuddy.components.EventPreviewCard
+import com.example.studybuddy.domain.Event
 
 @Composable
 fun ProfileRoute(
     signOut: () -> Unit,
+    changeCourse: () -> Unit,
     deleteAccount: () -> Unit,
+    onNavigateToEventDetails: (String) -> Unit, // Add this instead of NavController
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -47,31 +65,28 @@ fun ProfileRoute(
         modifier
             .fillMaxSize()
     ) {
-        ProfileScreen(navController = rememberNavController(), signOut, deleteAccount, viewModel)
+        ProfileScreen(
+            signOut = signOut,
+            changeCourse = changeCourse,
+            deleteAccount = deleteAccount,
+            onNavigateToEventDetails = onNavigateToEventDetails,
+            viewModel = viewModel
+        )
     }
 }
 
 @Composable
-fun ProfileScreen(navController: NavHostController, signOut: () -> Unit, deleteAccount: () -> Unit, viewModel: ProfileViewModel) {
+fun ProfileScreen(
+    signOut: () -> Unit,
+    changeCourse: () -> Unit,
+    deleteAccount: () -> Unit,
+    onNavigateToEventDetails: (String) -> Unit,
+    viewModel: ProfileViewModel
+) {
     val context = LocalContext.current
     val showAllEvents = remember { mutableStateOf(false) }
-    val events = remember {
-        mutableStateOf(
-            listOf(
-                Event("Calculus hw3", "Wednesday", "12/11/24", "6-9pm", "User1", "MA491"),
-                Event("Physics Lab", "Thursday", "12/12/24", "2-4pm", "User2", "PH211"),
-                Event("Group Study", "Friday", "12/13/24", "5-7pm", "User3", "CS501"),
-                Event("Data Science Review", "Saturday", "12/14/24", "3-5pm", "User4", "DS201"),
-                Event("Finals Review", "Tuesday", "12/17/24", "1-3pm", "User5", "CS501"),
-                Event("Finals Review 2", "Tuesday", "12/17/24", "5-7pm", "User5", "CS501"),
-            )
-        )
-    }
-//    val events = remember {
-//        mutableStateOf(
-//            listOf<Event>() // Empty list to simulate no events
-//        )
-//    }
+
+    val events by viewModel.events.collectAsState()
     val username by viewModel.username.collectAsState()
     val isEditing = remember { mutableStateOf(false) }
     val newUsername = remember { mutableStateOf(username) }
@@ -169,45 +184,63 @@ fun ProfileScreen(navController: NavHostController, signOut: () -> Unit, deleteA
                     Text(text = "Your Events", style = MaterialTheme.typography.titleMedium)
                 }
 
+
                 // Events Section
-                if (events.value.isEmpty()) {
+                if (events.isEmpty()) {
                     item {
-                        Text(text = "No events created yet. Start by creating a new event!", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "No events created yet. Start by creating a new event!",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 } else {
-                    val eventsToShow = if (showAllEvents.value) events.value else events.value.take(3)
+                    val eventsToShow = if (showAllEvents.value) events else events.take(3)
                     items(eventsToShow) { event ->
-                        EventItem(event)
+                        EventPreviewCard(
+                            event = event,
+                            onClick = {
+                                event.id?.let { eventId ->
+                                    onNavigateToEventDetails(eventId)
+                                }
+                            }
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    if (events.value.size > 3) {
+
+                    if (events.size > 3) {
                         item {
-                            // Show More/Show Less Button
                             Button(
                                 onClick = { showAllEvents.value = !showAllEvents.value },
-                                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                                colors = ButtonDefaults.buttonColors(Color(0xFF1E90FF))
                             ) {
-                                Text(if (showAllEvents.value) "Show Less" else "Show More", color = Color.White)
+                                Text(
+                                    if (showAllEvents.value) "Show Less" else "Show More",
+                                    color = Color.White
+                                )
                             }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .align(Alignment.BottomCenter)
-        ) {
+
+            Text(
+                text = "Change course",
+                color = Color.Blue,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clickable { changeCourse.invoke() }
+                    .padding(16.dp)
+            )
+
             Text(
                 text = "Delete Account",
                 color = Color.Red,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { showDialog.value = true }
+                modifier = Modifier
+                    .clickable { showDialog.value = true }
+                    .padding(16.dp)
             )
         }
     }
@@ -218,7 +251,7 @@ fun CircleAvatar() {
     Box(
         modifier = Modifier
             .size(100.dp)
-            .background(MaterialTheme.colorScheme.primary, shape = CircleShape) // Specific blue color
+            .background(Color(0xFF1E90FF), shape = CircleShape) // Specific blue color
     )
 }
 
@@ -228,7 +261,7 @@ fun EventItem(event: Event) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(2.dp))
+            .background(Color(0xFFE0F7FA)) // Super light blue background
             .padding(8.dp)
     ) {
         Row(
@@ -238,20 +271,11 @@ fun EventItem(event: Event) {
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = event.title, style = MaterialTheme.typography.titleMedium)
-                Text(text = event.className, style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${event.day} ${event.timeRange}")
-                Text(text = event.username)
+                Text(text = event.title.orEmpty(), style = MaterialTheme.typography.titleMedium)
+                Text(text = event.course.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+                Text(text = event.date.orEmpty())
+                Text(text = event.authorUsername.orEmpty())
             }
         }
     }
 }
-
-data class Event(
-    val title: String,
-    val day: String,
-    val date: String,
-    val timeRange: String,
-    val username: String,
-    val className: String
-)

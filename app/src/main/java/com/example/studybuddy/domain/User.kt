@@ -8,5 +8,5 @@ data class User(
     var userSurName: String = "",
     var userBio: String = "",
     var userPhoneNumber: String = "",
-    var status: String = ""
+    var status: String = "",
 )

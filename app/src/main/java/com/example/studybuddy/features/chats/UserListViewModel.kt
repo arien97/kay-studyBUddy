@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studybuddy.Constants
+import com.example.studybuddy.data.ProfileRepository
 import com.example.studybuddy.data.UserListRepository
 import com.example.studybuddy.domain.FriendListRegister
 import com.example.studybuddy.domain.FriendListRow
@@ -12,14 +13,21 @@ import com.example.studybuddy.domain.Response
 import com.example.studybuddy.utils.ToastNotifier
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class UserListViewModel @Inject constructor(
     private val userListRepository: UserListRepository,
+    private val profileRepository: ProfileRepository,
     private val toastNotifier: ToastNotifier,
 ) : ViewModel() {
+
+    val course = profileRepository.observeCourses()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     var pendingFriendRequestList = mutableStateOf<List<FriendListRegister>>(listOf())
         private set

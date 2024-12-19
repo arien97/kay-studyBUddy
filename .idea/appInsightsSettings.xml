@@ -23,9 +23,15 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.studybuddy" />
+<<<<<<< HEAD
                   <option name="mobileSdkAppId" value="1:251041565685:android:9a5f1505efe095a6ce2ebc" />
                   <option name="projectId" value="decemberchatsdemp" />
                   <option name="projectNumber" value="251041565685" />
+=======
+                  <option name="mobileSdkAppId" value="1:560058170796:android:e6e0b1ef34d4c83e46ce09" />
+                  <option name="projectId" value="studybuddy-59748" />
+                  <option name="projectNumber" value="560058170796" />
+>>>>>>> my-temp-branch
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -62,7 +62,7 @@ class ChatScreenRepository @Inject constructor() {
         }
     }
 
-    suspend fun loadMessagesFromFirebase(
+    fun loadMessagesFromFirebase(
         chatRoomUUID: String,
         opponentUUID: String,
         registerUUID: String
@@ -136,6 +136,72 @@ class ChatScreenRepository @Inject constructor() {
             this@callbackFlow.trySendBlocking(Response.Error(e.message ?: ERROR_MESSAGE))
         }
     }
+
+    fun loadCourseMessagesFromFirebase(
+        course: String,
+    ): Flow<Response<List<ChatMessage>>> = callbackFlow {
+        try {
+            this@callbackFlow.trySendBlocking(Response.Loading)
+            val userUUID = auth.currentUser?.uid
+
+            val databaseRefForLoadMessages =
+                database.getReference("ChatCourses").child(course)
+
+            val postListener =
+                databaseRefForLoadMessages.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val messageList = snapshot.children.mapNotNull {
+                            if (it.value?.javaClass != Boolean::class.java) {
+                                it.getValue(ChatMessage::class.java)
+                            } else {
+                                null
+                            }
+                        }.sortedBy { it.date }
+                        this@callbackFlow.trySendBlocking(Response.Success(messageList))
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        this@callbackFlow.trySendBlocking(Response.Error(error.message))
+                    }
+                })
+            databaseRefForLoadMessages.addValueEventListener(postListener)
+
+            awaitClose {
+                databaseRefForLoadMessages.removeEventListener(postListener)
+                channel.close()
+                cancel()
+            }
+        } catch (e: Exception) {
+            this@callbackFlow.trySendBlocking(Response.Error(e.message ?: ERROR_MESSAGE))
+        }
+    }
+
+
+    suspend fun insertCourseMessageToFirebase(
+        course: String,
+        messageContent: String,
+    ): Flow<Response<Boolean>> = flow {
+        try {
+            emit(Response.Loading)
+            val userUUID = auth.currentUser?.uid
+            val userEmail = auth.currentUser?.email
+            val messageUUID = UUID.randomUUID().toString()
+            val message = ChatMessage(
+                userUUID!!,
+                messageContent,
+                System.currentTimeMillis(),
+                MessageStatus.RECEIVED.toString()
+            )
+
+            val databaseRefMessages =
+                database.getReference("ChatCourses").child(course).child(messageUUID)
+            databaseRefMessages.setValue(message).await()
+            emit(Response.Success(true))
+        } catch (e: Exception) {
+            emit(Response.Error(e.message ?: ERROR_MESSAGE))
+        }
+    }
+
 
     suspend fun loadOpponentProfileFromFirebase(opponentUUID: String): Flow<Response<User>> =
         callbackFlow {

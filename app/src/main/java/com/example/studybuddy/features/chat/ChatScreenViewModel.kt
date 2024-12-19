@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studybuddy.MessageRegister
+import com.example.studybuddy.data.AuthRepository
 import com.example.studybuddy.data.ChatScreenRepository
 import com.example.studybuddy.domain.Response
 import com.example.studybuddy.domain.User
@@ -15,8 +16,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatScreenViewModel @Inject constructor(
-    private val chatScreenRepository: ChatScreenRepository
+    private val chatScreenRepository: ChatScreenRepository,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
+    private val currentUserId = authRepository.currentUserId
     var opponentProfileFromFirebase = mutableStateOf(User())
         private set
 
@@ -47,9 +50,11 @@ class ChatScreenViewModel @Inject constructor(
                     is Response.Loading -> {
                         messageInserted.value = false
                     }
+
                     is Response.Success -> {
                         messageInserted.value = true
                     }
+
                     is Response.Error -> {}
                 }
             }
@@ -75,6 +80,54 @@ class ChatScreenViewModel @Inject constructor(
                             }
                             messagesLoadedFirstTime.value = true
                         }
+
+                        is Response.Error -> {}
+                    }
+                }
+        }
+    }
+
+    fun loadCourseMessagesFromFirebase(course: String) {
+        viewModelScope.launch {
+            chatScreenRepository.loadCourseMessagesFromFirebase(course)
+                .collect { response ->
+                    when (response) {
+                        is Response.Loading -> {}
+                        is Response.Success -> {
+                            messages = listOf()
+                            for (i in response.data) {
+                                if (i.profileUUID != currentUserId) {
+                                    messages =
+                                        messages + MessageRegister(i, true) //Opponent Message
+                                } else {
+                                    messages = messages + MessageRegister(i, false) //User Message
+                                }
+
+                            }
+                            messagesLoadedFirstTime.value = true
+                        }
+
+                        is Response.Error -> {}
+                    }
+                }
+        }
+    }
+
+    fun insertCourseMessageToFirebase(
+        course: String, messageContent: String,
+    ) {
+        viewModelScope.launch {
+            chatScreenRepository.insertCourseMessageToFirebase(course, messageContent)
+                .collect { response ->
+                    when (response) {
+                        is Response.Loading -> {
+                            messageInserted.value = false
+                        }
+
+                        is Response.Success -> {
+                            messageInserted.value = true
+                        }
+
                         is Response.Error -> {}
                     }
                 }
@@ -89,25 +142,11 @@ class ChatScreenViewModel @Inject constructor(
                     is Response.Success -> {
                         opponentProfileFromFirebase.value = response.data
                     }
+
                     is Response.Error -> {}
                 }
             }
         }
     }
 
-    fun blockFriendToFirebase(registerUUID: String) {
-        viewModelScope.launch {
-            chatScreenRepository.blockFriendToFirebase(registerUUID).collect { response ->
-                when (response) {
-                    is Response.Loading -> {
-                        toastMessage.value = ""
-                    }
-                    is Response.Success -> {
-                        toastMessage.value = "Friend Blocked"
-                    }
-                    is Response.Error -> {}
-                }
-            }
-        }
-    }
 }
