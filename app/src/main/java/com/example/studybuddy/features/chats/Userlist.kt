@@ -112,71 +112,125 @@ private fun List(
     onAcceptClick: (FriendListRegister) -> Unit,
     courses: List<String>,
 ) {
-
-//    Box(Modifier.pullRefresh(state)) {
-
     Column(
         modifier = Modifier
     ) {
         Text(
-            text = "Chats",
+            text = "Open Chats",
             style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             state = scrollState,
         ) {
-            items(courses) { course ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable {
-                            val info = NavigationRoute.Chat.CourseChat(course)
-                            chatAction.invoke(info)
-                        }
-                        .padding(10.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(60.dp), shape = CircleShape
+            // Course Chats Section
+            if (courses.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Course Chats",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
+                items(courses) { course ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                val info = NavigationRoute.Chat.CourseChat(course)
+                                chatAction.invoke(info)
+                            }
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.School,
-                            contentDescription = null,
+                        Surface(
+                            modifier = Modifier.size(48.dp),
+                            shape = CircleShape
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.School,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .aspectRatio(1f)
+                            )
+                        }
+                        Text(
+                            text = course,
+                            style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier
-                                .padding(4.dp)
-                                .aspectRatio(1f)
+                                .align(Alignment.CenterVertically)
+                                .padding(start = 16.dp)
                         )
                     }
-                    Text(
-                        text = "course:$course",
-                        style = MaterialTheme.typography.titleMedium,
+                }
+            }
+
+            // Direct Messages Section
+            item {
+                Text(
+                    text = "Direct Messages",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+
+            if (acceptedFriendRequestList.value.isEmpty()) {
+                item {
+                    Column(
                         modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .padding(start = 16.dp)
-                    )
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No direct messages yet",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Click + button to send a friend request",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            } else {
+                items(acceptedFriendRequestList.value) { item ->
+                    AcceptPendingRequestList(item) {
+                        val info = NavigationRoute.Chat.PrivateChat(
+                            item.chatRoomUUID,
+                            item.registerUUID,
+                            item.userUUID
+                        )
+                        chatAction.invoke(info)
+                    }
                 }
             }
-            items(acceptedFriendRequestList.value) { item ->
-                AcceptPendingRequestList(item) {
-                    val info = NavigationRoute.Chat.PrivateChat(
-                        item.chatRoomUUID,
-                        item.registerUUID,
-                        item.userUUID
+
+            // Pending Requests Section
+            if (pendingFriendRequestList.value.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Pending Requests",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
-                    chatAction.invoke(info)
                 }
-            }
-            items(pendingFriendRequestList.value) { item ->
-                PendingFriendRequestList(item, { onAcceptClick.invoke(item) })
+
+                items(pendingFriendRequestList.value) { item ->
+                    PendingFriendRequestList(item) {
+                        onAcceptClick.invoke(item)
+                    }
+                }
             }
         }
-
-//            PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter))
-
     }
-//    }
-
 }
